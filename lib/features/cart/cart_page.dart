@@ -32,6 +32,11 @@ class _CartPageState extends ConsumerState<CartPage> {
     final dataTextStyle = Theme.of(context).textTheme.bodyMedium;
     final headingRowColor = colorScheme.surfaceVariant.withOpacity(0.6);
     final oddRowColor = colorScheme.surfaceVariant.withOpacity(0.25);
+    final totalSp = cartState.items.fold<int>(
+      0,
+      (total, item) =>
+          total + ((item.product.sp ?? 0) * item.quantity),
+    );
 
     return SelectableRegion(
       focusNode: FocusNode(),
@@ -107,6 +112,7 @@ class _CartPageState extends ConsumerState<CartPage> {
                                       const qtyWidth = 60.0;
                                       const unitWidth = 80.0;
                                       const autoorderWidth = 120.0;
+                                      const spWidth = 40.0;
                                       const lineWidth = 80.0;
                                       const actionsWidth = 80.0;
                                       final tableWidth =
@@ -116,9 +122,10 @@ class _CartPageState extends ConsumerState<CartPage> {
                                           qtyWidth +
                                           unitWidth +
                                           autoorderWidth +
+                                          spWidth +
                                           lineWidth +
                                           actionsWidth +
-                                          columnSpacing * 6;
+                                          columnSpacing * 7;
                                       return ConstrainedBox(
                                         constraints: BoxConstraints(
                                           minWidth: tableWidth,
@@ -181,6 +188,12 @@ class _CartPageState extends ConsumerState<CartPage> {
                                                     textAlign: TextAlign.right,
                                                   ),
                                                 ),
+                                              ),
+                                            ),
+                                            DataColumn(
+                                              label: SizedBox(
+                                                width: spWidth,
+                                                child: Text('SP'),
                                               ),
                                             ),
                                             DataColumn(
@@ -364,6 +377,28 @@ class _CartPageState extends ConsumerState<CartPage> {
                                                     ),
                                                     DataCell(
                                                       SizedBox(
+                                                        width: spWidth,
+                                                        child: Align(
+                                                          alignment:
+                                                              Alignment.center,
+                                                          child: Text(
+                                                            entry.value.product
+                                                                        .sp ==
+                                                                    null
+                                                                ? '-'
+                                                                : (entry.value
+                                                                            .product
+                                                                            .sp! *
+                                                                        entry
+                                                                            .value
+                                                                            .quantity)
+                                                                    .toString(),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    DataCell(
+                                                      SizedBox(
                                                         width: lineWidth,
                                                         child: Align(
                                                           alignment: Alignment
@@ -490,6 +525,12 @@ class _CartPageState extends ConsumerState<CartPage> {
                                   _SummaryRow(
                                     label: 'Total (AU\$)',
                                     value: _formatCurrency(cartState.total),
+                                    isEmphasis: true,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _SummaryRow(
+                                    label: 'Total Sale Points',
+                                    value: totalSp.toString(),
                                     isEmphasis: true,
                                   ),
                                 ],
