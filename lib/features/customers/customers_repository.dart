@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api_client.dart';
+import '../auto_orders/models.dart' show NoteMedia;
 import 'models.dart';
 
 final customersRepositoryProvider = Provider<CustomersRepository>((ref) {
@@ -43,6 +46,13 @@ class CustomersRepository {
     return Customer.fromJson(response.data ?? const {});
   }
 
+  Future<Customer> fetchCustomer(int id) async {
+    final response = await _client.get<Map<String, dynamic>>(
+      '/customers/$id',
+    );
+    return Customer.fromJson(response.data ?? const {});
+  }
+
   Future<Customer> updateCustomer(int id, CustomerFormData data) async {
     final response = await _client.put<Map<String, dynamic>>(
       '/customers/$id',
@@ -53,6 +63,18 @@ class CustomersRepository {
 
   Future<void> deleteCustomer(int id) async {
     await _client.delete<void>('/customers/$id');
+  }
+
+  Future<NoteMedia> uploadMedia(File file) async {
+    final fileName = file.path.split(Platform.pathSeparator).last;
+    final payload = FormData.fromMap({
+      'file': await MultipartFile.fromFile(file.path, filename: fileName),
+    });
+    final response = await _client.post<Map<String, dynamic>>(
+      '/uploads/media',
+      data: payload,
+    );
+    return NoteMedia.fromJson(response.data ?? const {});
   }
 
   Future<List<BusinessCenter>> fetchBusinessCenters() async {

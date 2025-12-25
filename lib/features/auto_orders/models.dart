@@ -61,6 +61,7 @@ class AutoOrder {
     required this.cycleColor,
     required this.status,
     this.note,
+    this.noteMedia = const [],
     this.memberPrice,
     this.autoorderPrice,
     this.points,
@@ -77,6 +78,7 @@ class AutoOrder {
   final CycleColor cycleColor;
   final ScheduleStatus status;
   final String? note;
+  final List<NoteMedia> noteMedia;
   // Pricing metadata (optional)
   final double? memberPrice;
   final double? autoorderPrice;
@@ -95,6 +97,7 @@ class AutoOrder {
       cycleColor: cycleColorFromJson(json['cycle_color'] as String? ?? 'red'),
       status: scheduleStatusFromJson(json['status'] as String? ?? 'active'),
       note: json['note'] as String?,
+      noteMedia: NoteMedia.fromJsonList(json['media']),
       memberPrice: (json['member_price'] as num?)?.toDouble(),
       autoorderPrice: (json['autoorder_price'] as num?)?.toDouble(),
       points: json['points'] as int?,
@@ -120,6 +123,54 @@ class AutoOrderListResponse {
         json['meta'] as Map<String, dynamic>? ?? const {},
       ),
     );
+  }
+}
+
+class NoteMedia {
+  NoteMedia({
+    this.id,
+    required this.url,
+    required this.mimeType,
+    required this.sizeBytes,
+    required this.originalName,
+    required this.sortOrder,
+  });
+
+  final int? id;
+  final String url;
+  final String mimeType;
+  final int sizeBytes;
+  final String originalName;
+  final int sortOrder;
+
+  factory NoteMedia.fromJson(Map<String, dynamic> json) {
+    return NoteMedia(
+      id: json['id'] as int?,
+      url: json['url'] as String? ?? '',
+      mimeType: json['mime_type'] as String? ?? '',
+      sizeBytes: json['size_bytes'] as int? ?? 0,
+      originalName: json['original_name'] as String? ?? '',
+      sortOrder: json['sort_order'] as int? ?? 0,
+    );
+  }
+
+  static List<NoteMedia> fromJsonList(dynamic value) {
+    if (value is! List) return [];
+    return value
+        .whereType<Map<String, dynamic>>()
+        .map(NoteMedia.fromJson)
+        .toList();
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      if (id != null) 'id': id,
+      'url': url,
+      'mime_type': mimeType,
+      'size_bytes': sizeBytes,
+      'original_name': originalName,
+      'sort_order': sortOrder,
+    };
   }
 }
 
@@ -158,6 +209,7 @@ class AutoOrderFormData {
     required this.cycleValue,
     required this.cycleColor,
     this.note,
+    this.noteMedia = const [],
     this.memberPrice,
     this.autoorderPrice,
     this.points,
@@ -174,6 +226,7 @@ class AutoOrderFormData {
   int cycleValue;
   CycleColor cycleColor;
   String? note;
+  List<NoteMedia> noteMedia;
   double? memberPrice;
   double? autoorderPrice;
   int? points;
@@ -190,6 +243,7 @@ class AutoOrderFormData {
       'cycle_value': cycleValue,
       'status': scheduleStatusToJson(status),
       'note': note,
+      'media': noteMedia.map((media) => media.toJson()).toList(),
       'member_price': memberPrice,
       'autoorder_price': autoorderPrice,
       'points': points,
@@ -206,6 +260,7 @@ class AutoOrderFormData {
       'cycle_value': cycleValue,
       'status': scheduleStatusToJson(status),
       'note': note,
+      'media': noteMedia.map((media) => media.toJson()).toList(),
       'member_price': memberPrice,
       'autoorder_price': autoorderPrice,
       'points': points,
@@ -224,6 +279,7 @@ class AutoOrderFormData {
       cycleValue: order.cycleValue,
       cycleColor: order.cycleColor,
       note: order.note,
+      noteMedia: order.noteMedia,
       memberPrice: order.memberPrice,
       autoorderPrice: order.autoorderPrice,
       points: order.points,

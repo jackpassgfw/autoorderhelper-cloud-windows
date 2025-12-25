@@ -1,12 +1,15 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/api_client.dart';
 import '../cart/cart_notifier.dart';
 import '../categories/models.dart';
 import 'models.dart';
 import 'product_form_dialog.dart';
 import 'products_notifier.dart';
+import 'products_repository.dart';
 import 'products_state.dart';
 
 class ProductsPage extends ConsumerStatefulWidget {
@@ -29,6 +32,7 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
   Widget build(BuildContext context) {
     final state = ref.watch(productsNotifierProvider);
     final notifier = ref.watch(productsNotifierProvider.notifier);
+    final repository = ref.watch(productsRepositoryProvider);
     final groups = _buildGroups(state.items, state.categories);
     final cartState = ref.watch(cartNotifierProvider);
     final colorScheme = Theme.of(context).colorScheme;
@@ -81,7 +85,8 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
                   FilledButton.icon(
                     icon: const Icon(Icons.add),
                     label: const Text('New Product'),
-                    onPressed: () => _openForm(context, state, notifier, null),
+                    onPressed: () =>
+                        _openForm(context, state, notifier, repository, null),
                   ),
                 ],
               ),
@@ -380,6 +385,7 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
                                                                   context,
                                                                   state,
                                                                   notifier,
+                                                                  repository,
                                                                   entry.value,
                                                                 ),
                                                               ),
@@ -580,21 +586,47 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
     BuildContext context,
     ProductsState state,
     ProductsNotifier notifier,
+    ProductsRepository repository,
     Product? existing,
   ) async {
-    final initialData = existing != null
-        ? ProductFormData.fromProduct(existing)
-        : ProductFormData(
-            categoryId: state.categories.isNotEmpty
-                ? state.categories.first.id
-                : null,
-          );
+    ProductFormData initialData;
+    if (existing != null) {
+      try {
+        final fresh = await repository.fetchProduct(existing.id);
+        initialData = ProductFormData.fromProduct(fresh);
+      } on DioException catch (error) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(normalizeErrorMessage(error)),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+        return;
+      } catch (_) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to load product'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+        return;
+      }
+    } else {
+      initialData = ProductFormData(
+        categoryId: state.categories.isNotEmpty
+            ? state.categories.first.id
+            : null,
+      );
+    }
 
     final result = await showDialog<String?>(
       context: context,
       builder: (_) => ProductFormDialog(
         initialData: initialData,
         categories: state.categories,
+        repository: repository,
         onSubmit: notifier.save,
       ),
     );

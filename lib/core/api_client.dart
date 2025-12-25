@@ -68,6 +68,16 @@ final apiClientProvider = Provider<Dio>((ref) {
         debugPrint(
           '[ERR] $code ${error.requestOptions.uri} location=${loc ?? "-"}',
         );
+        if (kDebugMode) {
+          final payload = error.requestOptions.data;
+          final responseData = error.response?.data;
+          if (payload != null) {
+            debugPrint('[ERR] payload: $payload');
+          }
+          if (responseData != null) {
+            debugPrint('[ERR] response: $responseData');
+          }
+        }
 
         if (code == 401 || code == 403) {
           ref.read(sessionExpiredProvider.notifier).state++;

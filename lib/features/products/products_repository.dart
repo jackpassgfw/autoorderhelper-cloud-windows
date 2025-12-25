@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api_client.dart';
+import '../auto_orders/models.dart' show NoteMedia;
 import '../customers/models.dart';
 import 'models.dart';
 
@@ -86,6 +89,13 @@ class ProductsRepository {
     return Product.fromJson(response.data ?? const {});
   }
 
+  Future<Product> fetchProduct(int id) async {
+    final response = await _client.get<Map<String, dynamic>>(
+      '/products/$id',
+    );
+    return Product.fromJson(response.data ?? const {});
+  }
+
   Future<Product> updateProduct(int id, ProductFormData data) async {
     final response = await _client.put<Map<String, dynamic>>(
       '/products/$id',
@@ -96,5 +106,17 @@ class ProductsRepository {
 
   Future<void> deleteProduct(int id) async {
     await _client.delete<void>('/products/$id');
+  }
+
+  Future<NoteMedia> uploadMedia(File file) async {
+    final fileName = file.path.split(Platform.pathSeparator).last;
+    final payload = FormData.fromMap({
+      'file': await MultipartFile.fromFile(file.path, filename: fileName),
+    });
+    final response = await _client.post<Map<String, dynamic>>(
+      '/uploads/media',
+      data: payload,
+    );
+    return NoteMedia.fromJson(response.data ?? const {});
   }
 }

@@ -1,11 +1,15 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'auto_order_form_dialog.dart';
 import 'auto_orders_notifier.dart';
+import 'auto_orders_repository.dart';
 import 'auto_orders_state.dart';
 import 'models.dart';
+import 'schedule_note_editor_page.dart';
+import '../../core/api_client.dart';
 
 class AutoOrdersPage extends ConsumerStatefulWidget {
   const AutoOrdersPage({super.key});
@@ -30,6 +34,7 @@ class _AutoOrdersPageState extends ConsumerState<AutoOrdersPage> {
   Widget build(BuildContext context) {
     final state = ref.watch(autoOrdersNotifierProvider);
     final notifier = ref.watch(autoOrdersNotifierProvider.notifier);
+    final repository = ref.watch(autoOrdersRepositoryProvider);
     final formatter = DateFormat('yyyy-MM-dd');
 
     final items = state.statusFilter == null
@@ -86,7 +91,13 @@ class _AutoOrdersPageState extends ConsumerState<AutoOrdersPage> {
                         state.customers.isEmpty ||
                             state.deductionOptions.isEmpty
                         ? null
-                        : () => _openForm(context, state, notifier, null),
+                        : () => _openForm(
+                            context,
+                            state,
+                            notifier,
+                            repository,
+                            null,
+                          ),
                   ),
                 ],
               ),
@@ -170,6 +181,7 @@ class _AutoOrdersPageState extends ConsumerState<AutoOrdersPage> {
                                           context,
                                           state,
                                           notifier,
+                                          repository,
                                           order,
                                         ),
                                       ),
@@ -238,29 +250,55 @@ class _AutoOrdersPageState extends ConsumerState<AutoOrdersPage> {
     BuildContext context,
     AutoOrdersState state,
     AutoOrdersNotifier notifier,
+    AutoOrdersRepository repository,
     AutoOrder? existing,
   ) async {
-    final initialData = existing != null
-        ? AutoOrderFormData.fromAutoOrder(existing)
-        : (state.customers.isNotEmpty && state.deductionOptions.isNotEmpty
-              ? AutoOrderFormData(
-                  customerId: state.customers.first.id,
-                  customerName: state.customers.first.name,
-                  customerUsanaId: state.customers.first.customerUsanaId ?? '',
-                  deductionDate: state.deductionOptions.first.date,
-                  cycleValue: state.deductionOptions.first.cycleValue,
-                  cycleColor: state.deductionOptions.first.cycleColor,
-                  note: '',
-                )
-              : AutoOrderFormData(
-                  customerId: 0,
-                  customerName: '',
-                  customerUsanaId: '',
-                  deductionDate: DateTime.now(),
-                  cycleValue: 1,
-                  cycleColor: CycleColor.red,
-                  note: '',
-                ));
+    AutoOrderFormData initialData;
+    if (existing != null) {
+      try {
+        final fresh = await repository.fetchAutoOrder(existing.id);
+        initialData = AutoOrderFormData.fromAutoOrder(fresh);
+      } on DioException catch (error) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(normalizeErrorMessage(error)),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+        return;
+      } catch (_) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to load auto order'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+        return;
+      }
+    } else {
+      initialData = state.customers.isNotEmpty &&
+              state.deductionOptions.isNotEmpty
+          ? AutoOrderFormData(
+              customerId: state.customers.first.id,
+              customerName: state.customers.first.name,
+              customerUsanaId: state.customers.first.customerUsanaId ?? '',
+              deductionDate: state.deductionOptions.first.date,
+              cycleValue: state.deductionOptions.first.cycleValue,
+              cycleColor: state.deductionOptions.first.cycleColor,
+              note: '',
+            )
+          : AutoOrderFormData(
+              customerId: 0,
+              customerName: '',
+              customerUsanaId: '',
+              deductionDate: DateTime.now(),
+              cycleValue: 1,
+              cycleColor: CycleColor.red,
+              note: '',
+            );
+    }
 
     final result = await showDialog<String?>(
       context: context,
@@ -280,6 +318,47 @@ class _AutoOrdersPageState extends ConsumerState<AutoOrdersPage> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(result)));
+    }
+  }
+
+  Future<void> _openNoteEditor(
+    BuildContext context,
+    AutoOrdersRepository repository,
+    AutoOrdersNotifier notifier,
+    AutoOrdersState state,
+    AutoOrder order,
+  ) async {
+    try {
+      final fresh = await repository.fetchAutoOrder(order.id);
+      if (!context.mounted) return;
+      final result = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => ScheduleNoteEditorPage(
+            scheduleId: fresh.id,
+            initialNote: fresh.note,
+            initialNoteMedia: fresh.noteMedia,
+          ),
+        ),
+      );
+      if (result == true && context.mounted) {
+        await notifier.loadAutoOrders(page: state.meta.page);
+      }
+    } on DioException catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(normalizeErrorMessage(error)),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Failed to open schedule note'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
     }
   }
 

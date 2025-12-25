@@ -1,9 +1,12 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/api_client.dart';
 import 'customer_followups_dialog.dart';
 import 'customer_form_dialog.dart';
 import 'customers_notifier.dart';
+import 'customers_repository.dart';
 import 'customers_state.dart';
 import 'models.dart';
 import 'customer_auto_orders_dialog.dart';
@@ -37,6 +40,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
   Widget build(BuildContext context) {
     final state = ref.watch(customersNotifierProvider);
     final notifier = ref.watch(customersNotifierProvider.notifier);
+    final repository = ref.watch(customersRepositoryProvider);
 
     final totalPages = (state.meta.total / state.meta.pageSize).ceil().clamp(
       1,
@@ -59,7 +63,8 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
               FilledButton.icon(
-                onPressed: () => _openCustomerForm(context, centerMap, null),
+                onPressed: () =>
+                    _openCustomerForm(context, centerMap, repository, null),
                 icon: const Icon(Icons.add),
                 label: const Text('New Customer'),
               ),
@@ -155,6 +160,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                                         onPressed: () => _openCustomerForm(
                                           context,
                                           centerMap,
+                                          repository,
                                           customer,
                                         ),
                                       ),
@@ -293,12 +299,37 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
   Future<void> _openCustomerForm(
     BuildContext context,
     Map<int, String> centerMap,
+    CustomersRepository repository,
     Customer? existing,
   ) async {
     final notifier = ref.read(customersNotifierProvider.notifier);
-    final formData = existing != null
-        ? CustomerFormData.fromCustomer(existing)
-        : CustomerFormData();
+    CustomerFormData formData;
+    if (existing != null) {
+      try {
+        final fresh = await repository.fetchCustomer(existing.id);
+        formData = CustomerFormData.fromCustomer(fresh);
+      } on DioException catch (error) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(normalizeErrorMessage(error)),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+        return;
+      } catch (_) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to load customer'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+        return;
+      }
+    } else {
+      formData = CustomerFormData();
+    }
 
     final result = await showDialog<String?>(
       context: context,
@@ -306,6 +337,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
         return CustomerFormDialog(
           initialData: formData,
           businessCenters: ref.read(customersNotifierProvider).businessCenters,
+          repository: repository,
           onSubmit: (data) => notifier.saveCustomer(data),
         );
       },

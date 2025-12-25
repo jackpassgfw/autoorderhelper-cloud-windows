@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api_client.dart';
@@ -84,6 +86,32 @@ class AutoOrdersRepository {
 
   Future<void> deleteAutoOrder(int id) async {
     await _client.delete<void>('/auto-orders/$id');
+  }
+
+  Future<NoteMedia> uploadNoteMedia(File file) async {
+    final fileName = file.path.split(Platform.pathSeparator).last;
+    final payload = FormData.fromMap({
+      'file': await MultipartFile.fromFile(file.path, filename: fileName),
+    });
+    final response = await _client.post<Map<String, dynamic>>(
+      '/uploads/media',
+      data: payload,
+    );
+    return NoteMedia.fromJson(response.data ?? const {});
+  }
+
+  Future<void> updateScheduleNote({
+    required int id,
+    required String note,
+    required List<NoteMedia> noteMedia,
+  }) async {
+    await _client.put<Map<String, dynamic>>(
+      '/auto-orders/$id',
+      data: {
+        'note': note,
+        'media': noteMedia.map((media) => media.toJson()).toList(),
+      },
+    );
   }
 
   Future<List<AutoOrder>> fetchAutoOrdersForCustomer(int customerId) async {

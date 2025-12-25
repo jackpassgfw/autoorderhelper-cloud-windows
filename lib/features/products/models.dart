@@ -1,3 +1,4 @@
+import '../auto_orders/models.dart' show NoteMedia;
 import '../customers/models.dart';
 
 class Product {
@@ -13,6 +14,7 @@ class Product {
     this.distributorPriceAud,
     this.notes,
     this.currency,
+    this.media = const [],
   });
 
   final int id;
@@ -26,6 +28,7 @@ class Product {
   final double? distributorPriceAud;
   final String? notes;
   final String? currency;
+  final List<NoteMedia> media;
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
@@ -43,6 +46,7 @@ class Product {
           (json['price'] as num?)?.toDouble(),
       notes: json['notes'] as String? ?? json['description'] as String?,
       currency: json['currency'] as String?,
+      media: NoteMedia.fromJsonList(json['media']),
     );
   }
 }
@@ -78,6 +82,7 @@ class ProductFormData {
     this.notes,
     this.currency,
     this.categoryId,
+    this.media = const [],
   });
 
   final int? id;
@@ -90,6 +95,7 @@ class ProductFormData {
   String? notes;
   String? currency;
   int? categoryId;
+  List<NoteMedia> media;
 
   Map<String, dynamic> toPayload() {
     final payload = <String, dynamic>{'product_name': name};
@@ -117,6 +123,7 @@ class ProductFormData {
     if (categoryId != null) {
       payload['category_id'] = categoryId;
     }
+    payload['media'] = media.map((item) => item.toJson()).toList();
     return payload;
   }
 
@@ -132,6 +139,7 @@ class ProductFormData {
       notes: product.notes,
       currency: product.currency,
       categoryId: product.categoryId,
+      media: product.media,
     );
   }
 }

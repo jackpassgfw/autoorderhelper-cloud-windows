@@ -1,9 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../customers/models.dart';
+import 'auto_orders_repository.dart';
 import 'models.dart';
+import 'note_media_preview.dart';
 
 class AutoOrderFormDialog extends ConsumerStatefulWidget {
   const AutoOrderFormDialog({
@@ -34,6 +39,7 @@ class _AutoOrderFormDialogState extends ConsumerState<AutoOrderFormDialog> {
   late final TextEditingController _freightFeeController;
   late final TextEditingController _discountController;
   String? _errorMessage;
+  bool _isUploading = false;
 
   DeductionOption? selectedOption;
   Customer? selectedCustomer;
@@ -114,6 +120,7 @@ class _AutoOrderFormDialogState extends ConsumerState<AutoOrderFormDialog> {
       });
       return;
     }
+    _syncSortOrder();
     final error = await widget.onSubmit(_data);
     if (error != null) {
       if (mounted) {
@@ -233,6 +240,88 @@ class _AutoOrderFormDialogState extends ConsumerState<AutoOrderFormDialog> {
                 maxLines: 3,
               ),
               const SizedBox(height: 8),
+              Row(
+                children: [
+                  Text(
+                    'Attachments',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const SizedBox(width: 8),
+                  if (_isUploading)
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  const Spacer(),
+                  OutlinedButton.icon(
+                    onPressed: _isUploading ? null : _pickAndUploadFiles,
+                    icon: const Icon(Icons.attach_file),
+                    label: const Text('Add file'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              if (_data.noteMedia.isNotEmpty)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _data.noteMedia.map((media) {
+                      return Stack(
+                        children: [
+                          GestureDetector(
+                            onTap: () => showNoteMediaPreview(context, media),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: Container(
+                                width: 72,
+                                height: 72,
+                                color: Colors.black12,
+                                child: Image.network(
+                                  media.url,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => const Center(
+                                    child: Icon(Icons.broken_image_outlined),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            right: 2,
+                            top: 2,
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _data.noteMedia = [
+                                    for (final item in _data.noteMedia)
+                                      if (item.url != media.url) item,
+                                  ];
+                                  _syncSortOrder();
+                                });
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.black54,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                padding: const EdgeInsets.all(2),
+                                child: const Icon(
+                                  Icons.close,
+                                  size: 12,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    }).toList(),
+                  ),
+                ),
+              const SizedBox(height: 8),
               Wrap(
                 spacing: 12,
                 runSpacing: 12,
@@ -348,6 +437,67 @@ class _AutoOrderFormDialogState extends ConsumerState<AutoOrderFormDialog> {
   int? _parseInt(String? input) {
     if (input == null || input.trim().isEmpty) return null;
     return int.tryParse(input.trim());
+  }
+
+  Future<void> _pickAndUploadFiles() async {
+    if (_isUploading) return;
+    setState(() => _isUploading = true);
+    try {
+      final files = await openFiles();
+      if (files.isEmpty) return;
+      final repository = ref.read(autoOrdersRepositoryProvider);
+      for (final picked in files) {
+        final uploaded = await _uploadPickedFile(picked, repository);
+        if (uploaded != null) {
+          setState(() {
+            _data.noteMedia = [..._data.noteMedia, uploaded];
+          });
+        }
+      }
+      _syncSortOrder();
+    } catch (_) {
+      _showSnack('Failed to upload file');
+    } finally {
+      if (mounted) {
+        setState(() => _isUploading = false);
+      }
+    }
+  }
+
+  Future<NoteMedia?> _uploadPickedFile(
+    XFile picked,
+    AutoOrdersRepository repository,
+  ) async {
+    final path = picked.path;
+    if (path.isEmpty) return null;
+    final file = File(path);
+    try {
+      return await repository.uploadNoteMedia(file);
+    } catch (_) {
+      _showSnack('Failed to upload ${picked.name}');
+      return null;
+    }
+  }
+
+  void _syncSortOrder() {
+    _data.noteMedia = [
+      for (var i = 0; i < _data.noteMedia.length; i++)
+        NoteMedia(
+          id: _data.noteMedia[i].id,
+          url: _data.noteMedia[i].url,
+          mimeType: _data.noteMedia[i].mimeType,
+          sizeBytes: _data.noteMedia[i].sizeBytes,
+          originalName: _data.noteMedia[i].originalName,
+          sortOrder: i,
+        ),
+    ];
+  }
+
+  void _showSnack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 }
 

@@ -1,3 +1,5 @@
+import '../auto_orders/models.dart' show NoteMedia;
+
 enum MemberStatus { unknown, notMember, member }
 
 MemberStatus memberStatusFromJson(String value) {
@@ -105,6 +107,7 @@ class Customer {
     this.usanaUsername,
     this.sponsor,
     this.businessCenterId,
+    this.media = const [],
   });
 
   final int id;
@@ -119,6 +122,7 @@ class Customer {
   final String? usanaUsername;
   final String? sponsor;
   final int? businessCenterId;
+  final List<NoteMedia> media;
 
   factory Customer.fromJson(Map<String, dynamic> json) {
     return Customer(
@@ -138,6 +142,7 @@ class Customer {
       usanaUsername: json['usana_username'] as String?,
       sponsor: json['sponsor'] as String?,
       businessCenterId: json['business_center_id'] as int?,
+      media: NoteMedia.fromJsonList(json['media']),
     );
   }
 
@@ -154,6 +159,7 @@ class Customer {
       'business_center_id': businessCenterId,
       'member_status': memberStatusToJson(memberStatus),
       'business_center_side': businessCenterSideToJson(businessCenterSide),
+      'media': media.map((item) => item.toJson()).toList(),
     };
   }
 }
@@ -191,6 +197,7 @@ class CustomerFormData {
     this.businessCenterId,
     this.memberStatus = MemberStatus.unknown,
     this.businessCenterSide = BusinessCenterSide.unknown,
+    this.media = const [],
   });
 
   final int? id;
@@ -205,21 +212,40 @@ class CustomerFormData {
   int? businessCenterId;
   MemberStatus memberStatus;
   BusinessCenterSide businessCenterSide;
+  List<NoteMedia> media;
 
   Map<String, dynamic> toPayload() {
-    return {
+    final payload = <String, dynamic>{
       'name': name,
       'phone': phone,
-      'email': email,
-      'address': address,
-      'note': note,
-      'customer_usana_id': customerUsanaId,
-      'usana_username': usanaUsername,
-      'sponsor': sponsor,
-      'business_center_id': businessCenterId,
       'member_status': memberStatusToJson(memberStatus),
       'business_center_side': businessCenterSideToJson(businessCenterSide),
     };
+    if (email != null) payload['email'] = email;
+    if (address != null) payload['address'] = address;
+    if (note != null) payload['note'] = note;
+    if (customerUsanaId != null) {
+      payload['customer_usana_id'] = customerUsanaId;
+    }
+    if (usanaUsername != null) payload['usana_username'] = usanaUsername;
+    if (sponsor != null) payload['sponsor'] = sponsor;
+    if (businessCenterId != null) {
+      payload['business_center_id'] = businessCenterId;
+    }
+    if (media.isNotEmpty) {
+      payload['media'] = media
+          .map(
+            (item) => {
+              'url': item.url,
+              'mime_type': item.mimeType,
+              'size_bytes': item.sizeBytes,
+              'original_name': item.originalName,
+              'sort_order': item.sortOrder,
+            },
+          )
+          .toList();
+    }
+    return payload;
   }
 
   factory CustomerFormData.fromCustomer(Customer customer) {
@@ -236,6 +262,7 @@ class CustomerFormData {
       businessCenterId: customer.businessCenterId,
       memberStatus: customer.memberStatus,
       businessCenterSide: customer.businessCenterSide,
+      media: customer.media,
     );
   }
 }
