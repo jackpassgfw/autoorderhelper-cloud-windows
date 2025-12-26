@@ -23,19 +23,52 @@ class CustomersRepository {
     String? search,
     MemberStatus? memberStatus,
     int? businessCenterId,
+    String? ordering,
   }) async {
+    final queryParameters = {
+      'page': page,
+      'page_size': pageSize,
+      if (search != null && search.isNotEmpty) 'search': search,
+      if (memberStatus != null)
+        'member_status': memberStatusToJson(memberStatus),
+      if (businessCenterId != null) 'business_center_id': businessCenterId,
+      if (ordering != null && ordering.isNotEmpty) 'ordering': ordering,
+    };
     final response = await _client.get<Map<String, dynamic>>(
       '/customers/',
-      queryParameters: {
-        'page': page,
-        'page_size': pageSize,
-        if (search != null && search.isNotEmpty) 'search': search,
-        if (memberStatus != null)
-          'member_status': memberStatusToJson(memberStatus),
-        if (businessCenterId != null) 'business_center_id': businessCenterId,
-      },
+      queryParameters: queryParameters,
     );
     return CustomerListResponse.fromJson(response.data ?? const {});
+  }
+
+  Future<List<Customer>> fetchAllCustomers({
+    int pageSize = 200,
+    MemberStatus? memberStatus,
+    int? businessCenterId,
+    String? ordering,
+  }) async {
+    var page = 1;
+    var totalPages = 1;
+    final byId = <int, Customer>{};
+    while (true) {
+      final response = await fetchCustomers(
+        page: page,
+        pageSize: pageSize,
+        memberStatus: memberStatus,
+        businessCenterId: businessCenterId,
+        ordering: ordering,
+      );
+      for (final item in response.items) {
+        byId[item.id] = item;
+      }
+      final total = response.meta.total;
+      totalPages = (total / response.meta.pageSize).ceil().clamp(1, 1000000);
+      if (response.items.isEmpty || page >= totalPages) break;
+      page += 1;
+    }
+    final items = byId.values.toList()
+      ..sort((a, b) => a.id.compareTo(b.id));
+    return items;
   }
 
   Future<Customer> createCustomer(CustomerFormData data) async {

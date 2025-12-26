@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,6 +22,7 @@ class CustomersPage extends ConsumerStatefulWidget {
 
 class _CustomersPageState extends ConsumerState<CustomersPage> {
   final _searchController = TextEditingController();
+  Timer? _searchDebounce;
 
   @override
   void initState() {
@@ -32,6 +35,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -42,11 +46,12 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
     final notifier = ref.watch(customersNotifierProvider.notifier);
     final repository = ref.watch(customersRepositoryProvider);
 
-    final totalPages = (state.meta.total / state.meta.pageSize).ceil().clamp(
-      1,
-      1000000,
-    );
     final currentPage = state.meta.page;
+    final hasKnownTotal = state.meta.total > 0;
+    final hasMore = state.items.length == state.meta.pageSize;
+    final totalPages = hasKnownTotal
+        ? (state.meta.total / state.meta.pageSize).ceil().clamp(1, 1000000)
+        : (hasMore ? currentPage + 1 : currentPage);
 
     final centerMap = {for (final c in state.businessCenters) c.id: c.name};
 
@@ -222,7 +227,17 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                     )
                   : null,
             ),
-            onSubmitted: notifier.updateSearch,
+            onSubmitted: (value) {
+              _searchDebounce?.cancel();
+              notifier.updateSearch(value);
+            },
+            onChanged: (value) {
+              _searchDebounce?.cancel();
+              _searchDebounce = Timer(
+                const Duration(milliseconds: 300),
+                () => notifier.updateSearch(value),
+              );
+            },
           ),
         ),
         DropdownButton<MemberStatus?>(

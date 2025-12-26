@@ -85,10 +85,23 @@ class PaginationMeta {
   final int total;
 
   factory PaginationMeta.fromJson(Map<String, dynamic> json) {
+    int parseInt(dynamic value, int fallback) {
+      if (value is int) return value;
+      if (value is num) return value.toInt();
+      if (value is String) return int.tryParse(value) ?? fallback;
+      return fallback;
+    }
+
     return PaginationMeta(
-      page: json['page'] as int? ?? 1,
-      pageSize: json['page_size'] as int? ?? 10,
-      total: json['total'] as int? ?? 0,
+      page: parseInt(json['page'] ?? json['current_page'], 1),
+      pageSize: parseInt(
+        json['page_size'] ?? json['pageSize'] ?? json['per_page'],
+        10,
+      ),
+      total: parseInt(
+        json['total'] ?? json['count'] ?? json['total_count'],
+        0,
+      ),
     );
   }
 }
