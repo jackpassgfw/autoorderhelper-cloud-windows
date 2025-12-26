@@ -37,9 +37,10 @@ class AutoOrdersRepository {
       '/auto-orders/deduction-options',
     );
     final data = response.data ?? [];
-    return data
+    final options = data
         .map((item) => DeductionOption.fromJson(item as Map<String, dynamic>))
         .toList();
+    return _extendDeductionOptions(options, 16);
   }
 
   Future<List<Customer>> fetchCustomersForSelect() async {
@@ -123,5 +124,51 @@ class AutoOrdersRepository {
       response.data ?? const {},
     );
     return listResponse.items;
+  }
+
+  List<DeductionOption> _extendDeductionOptions(
+    List<DeductionOption> options,
+    int targetCount,
+  ) {
+    if (options.length >= targetCount || options.length < 2) {
+      return options;
+    }
+
+    final extended = List<DeductionOption>.from(options);
+    final last = extended[extended.length - 1];
+    final prev = extended[extended.length - 2];
+    final delta = last.date.difference(prev.date);
+    if (delta.inDays == 0) return options;
+
+    final cyclePairs = <MapEntry<int, CycleColor>>[];
+    for (final option in extended) {
+      final exists = cyclePairs.any(
+        (pair) =>
+            pair.key == option.cycleValue && pair.value == option.cycleColor,
+      );
+      if (!exists) {
+        cyclePairs.add(MapEntry(option.cycleValue, option.cycleColor));
+      }
+    }
+    if (cyclePairs.isEmpty) return options;
+
+    var pairIndex = cyclePairs.indexWhere(
+      (pair) => pair.key == last.cycleValue && pair.value == last.cycleColor,
+    );
+    if (pairIndex == -1) pairIndex = 0;
+
+    while (extended.length < targetCount) {
+      pairIndex = (pairIndex + 1) % cyclePairs.length;
+      final nextPair = cyclePairs[pairIndex];
+      extended.add(
+        DeductionOption(
+          date: extended.last.date.add(delta),
+          cycleValue: nextPair.key,
+          cycleColor: nextPair.value,
+        ),
+      );
+    }
+
+    return extended;
   }
 }
