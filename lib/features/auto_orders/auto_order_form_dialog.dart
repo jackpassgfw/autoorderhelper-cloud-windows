@@ -556,13 +556,18 @@ class _AutoOrderFormDialogState extends ConsumerState<AutoOrderFormDialog> {
       await notifier.loadBusinessCenters();
       centers = ref.read(customersNotifierProvider).businessCenters;
     }
-
+    var countries = ref.read(customersNotifierProvider).countries;
+    if (countries.isEmpty) {
+      await notifier.loadCountries();
+      countries = ref.read(customersNotifierProvider).countries;
+    }
     final result = await showDialog<String?>(
       context: context,
       builder: (_) {
         return CustomerFormDialog(
           initialData: formData,
           businessCenters: centers,
+          countries: countries,
           repository: repository,
           onSubmit: (data) => notifier.saveCustomer(data),
         );

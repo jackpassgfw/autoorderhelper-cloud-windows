@@ -11,6 +11,7 @@ import '../features/business_centers/business_centers_page.dart';
 import '../features/calendar/calendar_page.dart';
 import '../features/cart/cart_page.dart';
 import '../features/categories/categories_page.dart';
+import '../features/countries/countries_page.dart';
 import '../features/customers/customers_page.dart';
 import '../features/previews/previews_page.dart';
 import '../features/products/products_page.dart';
@@ -72,6 +73,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             name: 'categories',
             pageBuilder: (context, state) =>
                 const MaterialPage(child: CategoriesPage()),
+          ),
+          GoRoute(
+            path: '/countries',
+            name: 'countries',
+            pageBuilder: (context, state) =>
+                const MaterialPage(child: CountriesPage()),
           ),
           GoRoute(
             path: '/auto-orders',

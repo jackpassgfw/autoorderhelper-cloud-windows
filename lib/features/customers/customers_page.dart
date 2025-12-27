@@ -31,6 +31,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
     super.initState();
     Future.microtask(() async {
       await ref.read(customersNotifierProvider.notifier).loadBusinessCenters();
+      await ref.read(customersNotifierProvider.notifier).loadCountries();
       await ref.read(customersNotifierProvider.notifier).loadCustomers(page: 1);
     });
   }
@@ -58,6 +59,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
         : (hasMore ? currentPage + 1 : currentPage);
 
     final centerMap = {for (final c in state.businessCenters) c.id: c.name};
+    final countryMap = {for (final c in state.countries) c.id: c.name};
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -71,11 +73,24 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                 'Customers',
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
-              FilledButton.icon(
-                onPressed: () =>
-                    _openCustomerForm(context, centerMap, repository, null),
-                icon: const Icon(Icons.add),
-                label: const Text('New Customer'),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildPagination(
+                    context,
+                    notifier,
+                    currentPage,
+                    totalPages,
+                    state.isLoading,
+                  ),
+                  const SizedBox(width: 12),
+                  FilledButton.icon(
+                    onPressed: () =>
+                        _openCustomerForm(context, centerMap, repository, null),
+                    icon: const Icon(Icons.add),
+                    label: const Text('New Customer'),
+                  ),
+                ],
               ),
             ],
           ),
@@ -116,6 +131,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                         columns: const [
                           DataColumn(label: Text('Name')),
                           DataColumn(label: Text('Phone')),
+                          DataColumn(label: Text('Country')),
                           DataColumn(label: Text('Member Status')),
                           DataColumn(label: Text('Business Center / Side')),
                           DataColumn(label: Text('USANA ID')),
@@ -134,6 +150,14 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                             cells: [
                               DataCell(Text(customer.name)),
                               DataCell(Text(customer.phone)),
+                              DataCell(
+                                Text(
+                                  customer.countryId == null
+                                      ? '-'
+                                      : (countryMap[customer.countryId] ??
+                                          customer.countryId.toString()),
+                                ),
+                              ),
                               DataCell(
                                 Text(memberStatusLabel(customer.memberStatus)),
                               ),
@@ -189,14 +213,6 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                       ),
                     ),
             ),
-          ),
-          const SizedBox(height: 8),
-          _buildPagination(
-            context,
-            notifier,
-            currentPage,
-            totalPages,
-            state.isLoading,
           ),
         ],
       ),
@@ -288,6 +304,24 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
             ),
           ],
         ),
+        DropdownButton<int?>(
+          value: state.countryFilter,
+          hint: const Text('Country'),
+          onChanged: notifier.updateCountry,
+          items: [
+            const DropdownMenuItem<int?>(
+              value: null,
+              child: Text('All countries'),
+            ),
+            const DropdownMenuItem<int?>(
+              value: kNotChinaFilterValue,
+              child: Text('Not China'),
+            ),
+            ...state.countries.map(
+              (c) => DropdownMenuItem<int?>(value: c.id, child: Text(c.name)),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -329,6 +363,11 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
     Customer? existing,
   ) async {
     final notifier = ref.read(customersNotifierProvider.notifier);
+    var countries = ref.read(customersNotifierProvider).countries;
+    if (countries.isEmpty) {
+      await notifier.loadCountries();
+      countries = ref.read(customersNotifierProvider).countries;
+    }
     CustomerFormData formData;
     if (existing != null) {
       try {
@@ -363,6 +402,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
         return CustomerFormDialog(
           initialData: formData,
           businessCenters: ref.read(customersNotifierProvider).businessCenters,
+          countries: countries,
           repository: repository,
           onSubmit: (data) => notifier.saveCustomer(data),
         );

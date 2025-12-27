@@ -1,6 +1,8 @@
 import '../auto_orders/models.dart' show AutoOrder;
 import 'models.dart';
 
+const int kNotChinaFilterValue = -1;
+
 class CustomersState {
   const CustomersState({
     required this.items,
@@ -10,8 +12,11 @@ class CustomersState {
     required this.search,
     required this.sponsorFilter,
     required this.businessCenterFilter,
+    required this.countryFilter,
     required this.businessCenters,
+    required this.countries,
     required this.isLoadingCenters,
+    required this.isLoadingCountries,
   });
 
   final List<Customer> items;
@@ -22,9 +27,12 @@ class CustomersState {
   final String search;
   final String sponsorFilter;
   final int? businessCenterFilter;
+  final int? countryFilter;
 
   final List<BusinessCenter> businessCenters;
+  final List<Country> countries;
   final bool isLoadingCenters;
+  final bool isLoadingCountries;
 
   static const _unset = Object();
 
@@ -36,12 +44,18 @@ class CustomersState {
     String? search,
     String? sponsorFilter,
     Object? businessCenterFilter = _unset,
+    Object? countryFilter = _unset,
     List<BusinessCenter>? businessCenters,
+    List<Country>? countries,
     bool? isLoadingCenters,
+    bool? isLoadingCountries,
   }) {
     final resolvedBusinessCenter = businessCenterFilter == _unset
         ? this.businessCenterFilter
         : businessCenterFilter as int?;
+    final resolvedCountry = countryFilter == _unset
+        ? this.countryFilter
+        : countryFilter as int?;
     return CustomersState(
       items: items ?? this.items,
       meta: meta ?? this.meta,
@@ -50,8 +64,11 @@ class CustomersState {
       search: search ?? this.search,
       sponsorFilter: sponsorFilter ?? this.sponsorFilter,
       businessCenterFilter: resolvedBusinessCenter,
+      countryFilter: resolvedCountry,
       businessCenters: businessCenters ?? this.businessCenters,
+      countries: countries ?? this.countries,
       isLoadingCenters: isLoadingCenters ?? this.isLoadingCenters,
+      isLoadingCountries: isLoadingCountries ?? this.isLoadingCountries,
     );
   }
 
@@ -64,8 +81,11 @@ class CustomersState {
       search: '',
       sponsorFilter: '',
       businessCenterFilter: null,
+      countryFilter: null,
       businessCenters: const [],
+      countries: const [],
       isLoadingCenters: false,
+      isLoadingCountries: false,
     );
   }
 }

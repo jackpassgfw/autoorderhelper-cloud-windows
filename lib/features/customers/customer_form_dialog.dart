@@ -13,12 +13,14 @@ class CustomerFormDialog extends StatefulWidget {
     super.key,
     required this.initialData,
     required this.businessCenters,
+    required this.countries,
     required this.repository,
     required this.onSubmit,
   });
 
   final CustomerFormData initialData;
   final List<BusinessCenter> businessCenters;
+  final List<Country> countries;
   final CustomersRepository repository;
   final Future<String?> Function(CustomerFormData data) onSubmit;
 
@@ -52,6 +54,7 @@ class _CustomerFormDialogState extends State<CustomerFormDialog> {
       phone: widget.initialData.phone,
       email: widget.initialData.email,
       address: widget.initialData.address,
+      countryId: widget.initialData.countryId,
       note: widget.initialData.note,
       customerUsanaId: widget.initialData.customerUsanaId,
       usanaUsername: widget.initialData.usanaUsername,
@@ -257,9 +260,39 @@ class _CustomerFormDialogState extends State<CustomerFormDialog> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
-                  controller: _addressController,
-                  decoration: const InputDecoration(labelText: 'Address'),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: TextFormField(
+                        controller: _addressController,
+                        decoration: const InputDecoration(labelText: 'Address'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 1,
+                      child: DropdownButtonFormField<int?>(
+                        value: _data.countryId,
+                        decoration: const InputDecoration(labelText: 'Country'),
+                        items: [
+                          const DropdownMenuItem<int?>(
+                            value: null,
+                            child: Text('None'),
+                          ),
+                          ...widget.countries.map(
+                            (country) => DropdownMenuItem<int?>(
+                              value: country.id,
+                              child: Text(country.name),
+                            ),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          setState(() => _data.countryId = value);
+                        },
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
@@ -351,21 +384,31 @@ class _CustomerFormDialogState extends State<CustomerFormDialog> {
                     ),
                   ),
                 const SizedBox(height: 8),
-                TextFormField(
-                  controller: _usanaIdController,
-                  decoration: const InputDecoration(labelText: 'USANA ID'),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _usanaUsernameController,
-                  decoration: const InputDecoration(
-                    labelText: 'USANA Username',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _sponsorController,
-                  decoration: const InputDecoration(labelText: 'Sponsor'),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _usanaIdController,
+                        decoration: const InputDecoration(labelText: 'USANA ID'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _usanaUsernameController,
+                        decoration: const InputDecoration(
+                          labelText: 'USANA Username',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _sponsorController,
+                        decoration: const InputDecoration(labelText: 'Sponsor'),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -446,4 +489,5 @@ class _CustomerFormDialogState extends State<CustomerFormDialog> {
       SnackBar(content: Text(message)),
     );
   }
+
 }

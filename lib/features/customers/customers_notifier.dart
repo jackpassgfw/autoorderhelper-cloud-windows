@@ -65,6 +65,25 @@ class CustomersNotifier extends StateNotifier<CustomersState> {
     }
   }
 
+  Future<void> loadCountries() async {
+    state = state.copyWith(isLoadingCountries: true, errorMessage: null);
+    try {
+      final countries = await _repository.fetchCountries()
+        ..sort((a, b) => a.name.compareTo(b.name));
+      state = state.copyWith(countries: countries, isLoadingCountries: false);
+    } on DioException catch (error) {
+      state = state.copyWith(
+        isLoadingCountries: false,
+        errorMessage: normalizeErrorMessage(error),
+      );
+    } catch (_) {
+      state = state.copyWith(
+        isLoadingCountries: false,
+        errorMessage: 'Failed to load countries',
+      );
+    }
+  }
+
   Future<void> loadCustomers({int? page}) async {
     final targetPage = page ?? state.meta.page;
     final requestId = ++_latestRequestId;
@@ -75,7 +94,8 @@ class CustomersNotifier extends StateNotifier<CustomersState> {
       final requiresClientPaging = _useClientPaging ||
           searchValue.isNotEmpty ||
           sponsorValue.isNotEmpty ||
-          state.businessCenterFilter != null;
+          state.businessCenterFilter != null ||
+          state.countryFilter != null;
       if (requiresClientPaging) {
         await _loadCustomersClient(targetPage: targetPage, requestId: requestId);
         return;
@@ -146,9 +166,20 @@ class CustomersNotifier extends StateNotifier<CustomersState> {
     final searchValue = state.search.trim().toLowerCase();
     final sponsorValue = state.sponsorFilter.trim().toLowerCase();
     final businessCenterId = state.businessCenterFilter;
+    final countryId = state.countryFilter;
+    final chinaCountryId = _findChinaCountryId();
     final filteredItems = allItems.where((item) {
       if (businessCenterId != null && item.businessCenterId != businessCenterId) {
         return false;
+      }
+      if (countryId != null) {
+        if (countryId == kNotChinaFilterValue) {
+          if (chinaCountryId != null && item.countryId == chinaCountryId) {
+            return false;
+          }
+        } else if (item.countryId != countryId) {
+          return false;
+        }
       }
       if (searchValue.isNotEmpty) {
         final name = item.name.toLowerCase();
@@ -204,6 +235,22 @@ class CustomersNotifier extends StateNotifier<CustomersState> {
     state = state.copyWith(businessCenterFilter: id);
     _invalidateCache();
     loadCustomers(page: 1);
+  }
+
+  void updateCountry(int? id) {
+    if (id == state.countryFilter) return;
+    state = state.copyWith(countryFilter: id);
+    _invalidateCache();
+    loadCustomers(page: 1);
+  }
+
+  int? _findChinaCountryId() {
+    for (final country in state.countries) {
+      if (country.name.trim().toLowerCase() == 'china') {
+        return country.id;
+      }
+    }
+    return null;
   }
 
   Future<String?> saveCustomer(CustomerFormData data) async {

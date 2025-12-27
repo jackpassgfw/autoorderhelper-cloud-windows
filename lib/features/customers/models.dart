@@ -115,6 +115,7 @@ class Customer {
     required this.businessCenterSide,
     this.email,
     this.address,
+    this.countryId,
     this.note,
     this.customerUsanaId,
     this.usanaUsername,
@@ -130,6 +131,7 @@ class Customer {
   final BusinessCenterSide businessCenterSide;
   final String? email;
   final String? address;
+  final int? countryId;
   final String? note;
   final String? customerUsanaId;
   final String? usanaUsername;
@@ -150,6 +152,7 @@ class Customer {
         json['business_center_side'] as String? ?? 'unknown',
       ),
       address: json['address'] as String?,
+      countryId: json['country_id'] as int?,
       note: json['note'] as String?,
       customerUsanaId: json['customer_usana_id'] as String?,
       usanaUsername: json['usana_username'] as String?,
@@ -165,6 +168,7 @@ class Customer {
       'phone': phone,
       'email': email,
       'address': address,
+      'country_id': countryId,
       'note': note,
       'customer_usana_id': customerUsanaId,
       'usana_username': usanaUsername,
@@ -203,6 +207,7 @@ class CustomerFormData {
     this.phone = '',
     this.email,
     this.address,
+    this.countryId,
     this.note,
     this.customerUsanaId,
     this.usanaUsername,
@@ -218,6 +223,7 @@ class CustomerFormData {
   String phone;
   String? email;
   String? address;
+  int? countryId;
   String? note;
   String? customerUsanaId;
   String? usanaUsername;
@@ -236,6 +242,7 @@ class CustomerFormData {
     };
     if (email != null) payload['email'] = email;
     if (address != null) payload['address'] = address;
+    if (countryId != null) payload['country_id'] = countryId;
     if (note != null) payload['note'] = note;
     if (customerUsanaId != null) {
       payload['customer_usana_id'] = customerUsanaId;
@@ -268,6 +275,7 @@ class CustomerFormData {
       phone: customer.phone,
       email: customer.email,
       address: customer.address,
+      countryId: customer.countryId,
       note: customer.note,
       customerUsanaId: customer.customerUsanaId,
       usanaUsername: customer.usanaUsername,
@@ -292,6 +300,20 @@ class BusinessCenter {
       id: json['id'] as int,
       name: json['name'] as String? ?? '',
       description: json['description'] as String?,
+    );
+  }
+}
+
+class Country {
+  Country({required this.id, required this.name});
+
+  final int id;
+  final String name;
+
+  factory Country.fromJson(Map<String, dynamic> json) {
+    return Country(
+      id: json['id'] as int,
+      name: json['name'] as String? ?? '',
     );
   }
 }

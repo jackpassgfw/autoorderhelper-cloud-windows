@@ -8,6 +8,7 @@ import '../auto_orders/auto_orders_notifier.dart';
 import '../business_centers/business_centers_notifier.dart';
 import '../cart/cart_notifier.dart';
 import '../categories/categories_notifier.dart';
+import '../countries/countries_notifier.dart';
 import '../customers/customer_auto_orders_notifier.dart';
 import '../customers/customer_followups_notifier.dart';
 import '../customers/customers_notifier.dart';
@@ -40,6 +41,11 @@ class AppShell extends ConsumerWidget {
       path: '/categories',
       label: 'Categories',
       icon: Icons.category_outlined,
+    ),
+    _NavDestination(
+      path: '/countries',
+      label: 'Countries',
+      icon: Icons.public_outlined,
     ),
     _NavDestination(
       path: '/auto-orders',
@@ -196,6 +202,7 @@ void _resetFeatureState(WidgetRef ref) {
   ref.invalidate(businessCentersNotifierProvider);
   ref.invalidate(cartNotifierProvider);
   ref.invalidate(categoriesNotifierProvider);
+  ref.invalidate(countriesNotifierProvider);
   ref.invalidate(customersNotifierProvider);
   ref.invalidate(productsNotifierProvider);
   ref.invalidate(customerAutoOrdersProvider);

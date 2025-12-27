@@ -118,6 +118,14 @@ class CustomersRepository {
         .toList();
   }
 
+  Future<List<Country>> fetchCountries() async {
+    final response = await _client.get<List<dynamic>>('/countries/');
+    final data = response.data ?? [];
+    return data
+        .map((item) => Country.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
   Future<List<Followup>> fetchFollowups(int customerId) async {
     final response = await _client.get<List<dynamic>>(
       '/customers/$customerId/followups',
