@@ -32,15 +32,13 @@ class CustomersNotifier extends StateNotifier<CustomersState> {
   }
 
   String _buildCacheKey() {
-    return '${state.memberStatusFilter}|${state.businessCenterFilter}';
+    return 'all';
   }
 
   Future<List<Customer>> _loadAllCustomers() async {
     final key = _buildCacheKey();
     if (_hasCache && _cacheKey == key) return _cachedCustomers;
     final items = await _repository.fetchAllCustomers(
-      memberStatus: state.memberStatusFilter,
-      businessCenterId: state.businessCenterFilter,
       ordering: 'id',
     );
     _cachedCustomers = items;
@@ -73,7 +71,12 @@ class CustomersNotifier extends StateNotifier<CustomersState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final searchValue = state.search.trim();
-      if (_useClientPaging || searchValue.isNotEmpty) {
+      final sponsorValue = state.sponsorFilter.trim();
+      final requiresClientPaging = _useClientPaging ||
+          searchValue.isNotEmpty ||
+          sponsorValue.isNotEmpty ||
+          state.businessCenterFilter != null;
+      if (requiresClientPaging) {
         await _loadCustomersClient(targetPage: targetPage, requestId: requestId);
         return;
       }
@@ -82,8 +85,6 @@ class CustomersNotifier extends StateNotifier<CustomersState> {
         page: targetPage,
         pageSize: state.meta.pageSize,
         search: null,
-        memberStatus: state.memberStatusFilter,
-        businessCenterId: state.businessCenterFilter,
         ordering: 'id',
       );
 
@@ -143,13 +144,25 @@ class CustomersNotifier extends StateNotifier<CustomersState> {
   }) async {
     final allItems = await _loadAllCustomers();
     final searchValue = state.search.trim().toLowerCase();
-    final filteredItems = searchValue.isEmpty
-        ? allItems
-        : allItems.where((item) {
-            final name = item.name.toLowerCase();
-            final phone = item.phone.toLowerCase();
-            return name.contains(searchValue) || phone.contains(searchValue);
-          }).toList();
+    final sponsorValue = state.sponsorFilter.trim().toLowerCase();
+    final businessCenterId = state.businessCenterFilter;
+    final filteredItems = allItems.where((item) {
+      if (businessCenterId != null && item.businessCenterId != businessCenterId) {
+        return false;
+      }
+      if (searchValue.isNotEmpty) {
+        final name = item.name.toLowerCase();
+        final phone = item.phone.toLowerCase();
+        if (!name.contains(searchValue) && !phone.contains(searchValue)) {
+          return false;
+        }
+      }
+      if (sponsorValue.isNotEmpty) {
+        final sponsor = (item.sponsor ?? '').toLowerCase();
+        if (!sponsor.contains(sponsorValue)) return false;
+      }
+      return true;
+    }).toList();
     final total = filteredItems.length;
     final pageSize = state.meta.pageSize;
     final totalPages = (total / pageSize).ceil().clamp(1, 1000000);
@@ -178,9 +191,10 @@ class CustomersNotifier extends StateNotifier<CustomersState> {
     loadCustomers(page: 1);
   }
 
-  void updateMemberStatus(MemberStatus? status) {
-    if (status == state.memberStatusFilter) return;
-    state = state.copyWith(memberStatusFilter: status);
+  void updateSponsorFilter(String value) {
+    final normalized = value.trim();
+    if (normalized == state.sponsorFilter) return;
+    state = state.copyWith(sponsorFilter: normalized);
     _invalidateCache();
     loadCustomers(page: 1);
   }

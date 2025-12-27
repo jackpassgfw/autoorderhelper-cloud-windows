@@ -23,23 +23,33 @@ class CustomerAutoOrdersDialog extends ConsumerStatefulWidget {
 class _CustomerAutoOrdersDialogState
     extends ConsumerState<CustomerAutoOrdersDialog> {
   AutoOrder? _selectedOrder;
+  int? _filterCustomerId;
+  List<Customer> _customers = const [];
+  bool _isLoadingCustomers = false;
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      ref.read(customerAutoOrdersProvider(widget.customer.id).notifier).load();
+    _filterCustomerId = widget.customer.id;
+    Future.microtask(() async {
+      await _loadCustomers();
+      _loadSchedulesForCustomer(_filterCustomerId ?? widget.customer.id);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(customerAutoOrdersProvider(widget.customer.id));
+    final activeCustomerId = _filterCustomerId ?? widget.customer.id;
+    final activeCustomer = _resolveCustomer(activeCustomerId);
+    final state = ref.watch(customerAutoOrdersProvider(activeCustomerId));
     final formatter = DateFormat('yyyy-MM-dd');
-    final usanaId = widget.customer.customerUsanaId ?? '-';
+    final usanaId = activeCustomer.customerUsanaId ?? '-';
+    final schedules = state.schedules
+        .where((order) => order.customerId == activeCustomerId)
+        .toList();
 
     return AlertDialog(
-      title: Text('Auto Orders  ${widget.customer.name} (USANA ID: $usanaId)'),
+      title: Text('Auto Orders  ${activeCustomer.name} (USANA ID: $usanaId)'),
       content: SizedBox(
         width: 900,
         height: 420,
@@ -58,6 +68,47 @@ class _CustomerAutoOrdersDialogState
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<int>(
+                        value: _filterCustomerId,
+                        decoration: const InputDecoration(
+                          labelText: 'Customer',
+                        ),
+                        items: _customers
+                            .map(
+                              (c) => DropdownMenuItem<int>(
+                                value: c.id,
+                                child: Text(
+                                  '${c.name} (${c.customerUsanaId ?? '-'})',
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: _isLoadingCustomers
+                            ? null
+                            : (value) {
+                                if (value == null) return;
+                                setState(() {
+                                  _filterCustomerId = value;
+                                  _selectedOrder = null;
+                                });
+                                _loadSchedulesForCustomer(value);
+                              },
+                      ),
+                    ),
+                    if (_isLoadingCustomers) ...[
+                      const SizedBox(width: 8),
+                      const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 8),
                 if (state.errorMessage != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
@@ -71,7 +122,7 @@ class _CustomerAutoOrdersDialogState
                 Expanded(
                   child: state.isLoading
                       ? const Center(child: CircularProgressIndicator())
-                      : state.schedules.isEmpty
+                      : schedules.isEmpty
                       ? const Center(
                           child: Text(
                             'No auto-order schedules for this customer yet',
@@ -79,14 +130,14 @@ class _CustomerAutoOrdersDialogState
                         )
                       : isWide
                       ? _WideTable(
-                          schedules: state.schedules,
+                          schedules: schedules,
                           formatter: formatter,
                           selected: _selectedOrder,
                           onSelect: _handleOrderTap,
                           widths: widths,
                         )
                       : _NarrowCards(
-                          schedules: state.schedules,
+                          schedules: schedules,
                           formatter: formatter,
                           selected: _selectedOrder,
                           onSelect: _handleOrderTap,
@@ -134,6 +185,8 @@ class _CustomerAutoOrdersDialogState
   }
 
   Future<void> _openEditForm(AutoOrder order) async {
+    final activeCustomerId = _filterCustomerId ?? widget.customer.id;
+    final activeCustomer = _resolveCustomer(activeCustomerId);
     final repository = ref.read(autoOrdersRepositoryProvider);
     try {
       final customers = await repository.fetchCustomersForSelect();
@@ -143,7 +196,7 @@ class _CustomerAutoOrdersDialogState
         context: context,
         builder: (_) => AutoOrderFormDialog(
           initialData: AutoOrderFormData.fromAutoOrder(order),
-          customers: _ensureCustomerIncluded(customers, widget.customer),
+          customers: _ensureCustomerIncluded(customers, activeCustomer),
           deductionOptions: _ensureOptionWithCurrentDate(
             options,
             order.deductionDate,
@@ -151,7 +204,7 @@ class _CustomerAutoOrdersDialogState
             order.cycleColor,
           ),
           onSubmit: (data) => ref
-              .read(customerAutoOrdersProvider(widget.customer.id).notifier)
+              .read(customerAutoOrdersProvider(activeCustomer.id).notifier)
               .save(data),
         ),
       );
@@ -183,7 +236,8 @@ class _CustomerAutoOrdersDialogState
   }
 
   AutoOrder? _findOrderById(int id) {
-    final state = ref.read(customerAutoOrdersProvider(widget.customer.id));
+    final activeCustomerId = _filterCustomerId ?? widget.customer.id;
+    final state = ref.read(customerAutoOrdersProvider(activeCustomerId));
     for (final order in state.schedules) {
       if (order.id == id) return order;
     }
@@ -217,6 +271,55 @@ class _CustomerAutoOrdersDialogState
     ];
   }
 
+  Future<void> _loadCustomers() async {
+    if (_isLoadingCustomers) return;
+    setState(() => _isLoadingCustomers = true);
+    try {
+      final repository = ref.read(autoOrdersRepositoryProvider);
+      final customers = await repository.fetchCustomersForSelect();
+      if (!mounted) return;
+      final current = widget.customer;
+      final unique = <int, Customer>{};
+      for (final customer in customers) {
+        unique[customer.id] = customer;
+      }
+      unique[current.id] = current;
+      setState(() {
+        _customers = unique.values.toList()
+          ..sort((a, b) => a.name.compareTo(b.name));
+        _isLoadingCustomers = false;
+      });
+    } on DioException catch (error) {
+      if (!mounted) return;
+      setState(() => _isLoadingCustomers = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(normalizeErrorMessage(error)),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isLoadingCustomers = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Failed to load customers'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    }
+  }
+
+  void _loadSchedulesForCustomer(int customerId) {
+    ref.read(customerAutoOrdersProvider(customerId).notifier).load();
+  }
+
+  Customer _resolveCustomer(int customerId) {
+    for (final customer in _customers) {
+      if (customer.id == customerId) return customer;
+    }
+    return widget.customer;
+  }
 }
 
 class _TableWidths {

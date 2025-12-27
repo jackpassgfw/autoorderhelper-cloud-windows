@@ -8,7 +8,7 @@ class CustomersState {
     required this.isLoading,
     required this.errorMessage,
     required this.search,
-    required this.memberStatusFilter,
+    required this.sponsorFilter,
     required this.businessCenterFilter,
     required this.businessCenters,
     required this.isLoadingCenters,
@@ -20,11 +20,13 @@ class CustomersState {
   final String? errorMessage;
 
   final String search;
-  final MemberStatus? memberStatusFilter;
+  final String sponsorFilter;
   final int? businessCenterFilter;
 
   final List<BusinessCenter> businessCenters;
   final bool isLoadingCenters;
+
+  static const _unset = Object();
 
   CustomersState copyWith({
     List<Customer>? items,
@@ -32,19 +34,22 @@ class CustomersState {
     bool? isLoading,
     String? errorMessage,
     String? search,
-    MemberStatus? memberStatusFilter,
-    int? businessCenterFilter,
+    String? sponsorFilter,
+    Object? businessCenterFilter = _unset,
     List<BusinessCenter>? businessCenters,
     bool? isLoadingCenters,
   }) {
+    final resolvedBusinessCenter = businessCenterFilter == _unset
+        ? this.businessCenterFilter
+        : businessCenterFilter as int?;
     return CustomersState(
       items: items ?? this.items,
       meta: meta ?? this.meta,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
       search: search ?? this.search,
-      memberStatusFilter: memberStatusFilter ?? this.memberStatusFilter,
-      businessCenterFilter: businessCenterFilter ?? this.businessCenterFilter,
+      sponsorFilter: sponsorFilter ?? this.sponsorFilter,
+      businessCenterFilter: resolvedBusinessCenter,
       businessCenters: businessCenters ?? this.businessCenters,
       isLoadingCenters: isLoadingCenters ?? this.isLoadingCenters,
     );
@@ -57,7 +62,7 @@ class CustomersState {
       isLoading: false,
       errorMessage: null,
       search: '',
-      memberStatusFilter: null,
+      sponsorFilter: '',
       businessCenterFilter: null,
       businessCenters: const [],
       isLoadingCenters: false,

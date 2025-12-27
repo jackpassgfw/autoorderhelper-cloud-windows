@@ -22,7 +22,9 @@ class CustomersPage extends ConsumerStatefulWidget {
 
 class _CustomersPageState extends ConsumerState<CustomersPage> {
   final _searchController = TextEditingController();
+  final _sponsorController = TextEditingController();
   Timer? _searchDebounce;
+  Timer? _sponsorDebounce;
 
   @override
   void initState() {
@@ -37,6 +39,8 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
   void dispose() {
     _searchDebounce?.cancel();
     _searchController.dispose();
+    _sponsorDebounce?.cancel();
+    _sponsorController.dispose();
     super.dispose();
   }
 
@@ -240,28 +244,35 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
             },
           ),
         ),
-        DropdownButton<MemberStatus?>(
-          value: state.memberStatusFilter,
-          hint: const Text('Member status'),
-          onChanged: notifier.updateMemberStatus,
-          items: const [
-            DropdownMenuItem<MemberStatus?>(
-              value: null,
-              child: Text('All statuses'),
+        SizedBox(
+          width: 220,
+          child: TextField(
+            controller: _sponsorController,
+            decoration: InputDecoration(
+              labelText: 'Sponsor',
+              prefixIcon: const Icon(Icons.person_search),
+              suffixIcon: state.sponsorFilter.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _sponsorController.clear();
+                        notifier.updateSponsorFilter('');
+                      },
+                    )
+                  : null,
             ),
-            DropdownMenuItem<MemberStatus?>(
-              value: MemberStatus.unknown,
-              child: Text('Unknown'),
-            ),
-            DropdownMenuItem<MemberStatus?>(
-              value: MemberStatus.notMember,
-              child: Text('Not Member'),
-            ),
-            DropdownMenuItem<MemberStatus?>(
-              value: MemberStatus.member,
-              child: Text('Member'),
-            ),
-          ],
+            onSubmitted: (value) {
+              _sponsorDebounce?.cancel();
+              notifier.updateSponsorFilter(value);
+            },
+            onChanged: (value) {
+              _sponsorDebounce?.cancel();
+              _sponsorDebounce = Timer(
+                const Duration(milliseconds: 300),
+                () => notifier.updateSponsorFilter(value),
+              );
+            },
+          ),
         ),
         DropdownButton<int?>(
           value: state.businessCenterFilter,

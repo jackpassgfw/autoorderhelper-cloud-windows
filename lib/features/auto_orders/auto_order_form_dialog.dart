@@ -4,8 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:dio/dio.dart';
 
+import '../../core/api_client.dart';
 import '../customers/models.dart';
+import '../customers/customer_form_dialog.dart';
+import '../customers/customers_notifier.dart';
+import '../customers/customers_repository.dart';
 import 'auto_orders_repository.dart';
 import 'models.dart';
 import 'note_media_preview.dart';
@@ -155,29 +160,58 @@ class _AutoOrderFormDialogState extends ConsumerState<AutoOrderFormDialog> {
                     ),
                   ),
                 ),
-              DropdownButtonFormField<Customer>(
-                initialValue: selectedCustomer,
-                decoration: const InputDecoration(labelText: 'Customer'),
-                items: widget.customers
-                    .map(
-                      (c) => DropdownMenuItem<Customer>(
-                        value: c,
-                        child: Text('${c.name} (${c.customerUsanaId ?? '-'})'),
+              if (_data.id == null)
+                DropdownButtonFormField<Customer>(
+                  initialValue: selectedCustomer,
+                  decoration: const InputDecoration(labelText: 'Customer'),
+                  items: widget.customers
+                      .map(
+                        (c) => DropdownMenuItem<Customer>(
+                          value: c,
+                          child: Text(
+                            '${c.name} (${c.customerUsanaId ?? '-'})',
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (c) {
+                    setState(() {
+                      selectedCustomer = c;
+                      if (c != null) {
+                        _data.customerName = c.name;
+                        _data.customerUsanaId = c.customerUsanaId ?? '';
+                      }
+                    });
+                  },
+                  validator: (value) =>
+                      value == null ? 'Select a customer' : null,
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: InputDecorator(
+                        decoration: const InputDecoration(labelText: 'Customer'),
+                        child: Text(
+                          selectedCustomer == null
+                              ? '-'
+                              : '${selectedCustomer!.name} (${selectedCustomer!.customerUsanaId ?? '-'})',
+                        ),
                       ),
-                    )
-                    .toList(),
-                onChanged: (c) {
-                  setState(() {
-                    selectedCustomer = c;
-                    if (c != null) {
-                      _data.customerName = c.name;
-                      _data.customerUsanaId = c.customerUsanaId ?? '';
-                    }
-                  });
-                },
-                validator: (value) =>
-                    value == null ? 'Select a customer' : null,
-              ),
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      onPressed: selectedCustomer == null
+                          ? null
+                          : () => _openCustomerForm(
+                                context,
+                                selectedCustomer!,
+                              ),
+                      icon: const Icon(Icons.open_in_new),
+                      label: const Text('Show customer'),
+                    ),
+                  ],
+                ),
               const SizedBox(height: 8),
               DropdownButtonFormField<DeductionOption>(
                 initialValue: selectedOption,
@@ -498,6 +532,46 @@ class _AutoOrderFormDialogState extends ConsumerState<AutoOrderFormDialog> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
+  }
+
+  Future<void> _openCustomerForm(BuildContext context, Customer customer) async {
+    final repository = ref.read(customersRepositoryProvider);
+    final notifier = ref.read(customersNotifierProvider.notifier);
+    CustomerFormData formData;
+    try {
+      final fresh = await repository.fetchCustomer(customer.id);
+      formData = CustomerFormData.fromCustomer(fresh);
+    } on DioException catch (error) {
+      if (!mounted) return;
+      _showSnack(normalizeErrorMessage(error));
+      return;
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack('Failed to load customer');
+      return;
+    }
+
+    var centers = ref.read(customersNotifierProvider).businessCenters;
+    if (centers.isEmpty) {
+      await notifier.loadBusinessCenters();
+      centers = ref.read(customersNotifierProvider).businessCenters;
+    }
+
+    final result = await showDialog<String?>(
+      context: context,
+      builder: (_) {
+        return CustomerFormDialog(
+          initialData: formData,
+          businessCenters: centers,
+          repository: repository,
+          onSubmit: (data) => notifier.saveCustomer(data),
+        );
+      },
+    );
+
+    if (result != null && result.isNotEmpty && mounted) {
+      _showSnack(result);
+    }
   }
 }
 
