@@ -50,6 +50,10 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
     final state = ref.watch(customersNotifierProvider);
     final notifier = ref.watch(customersNotifierProvider.notifier);
     final repository = ref.watch(customersRepositoryProvider);
+    final highlightColor = Theme.of(
+      context,
+    ).colorScheme.primary.withOpacity(0.2);
+    final dataTextStyle = Theme.of(context).textTheme.bodyMedium;
 
     final currentPage = state.meta.page;
     final hasKnownTotal = state.meta.total > 0;
@@ -145,25 +149,76 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                               customer.businessCenterSide,
                             ),
                           ].join('. ');
+                          final countryLabel = customer.countryId == null
+                              ? '-'
+                              : (countryMap[customer.countryId] ??
+                                    customer.countryId.toString());
+                          final memberStatus = memberStatusLabel(
+                            customer.memberStatus,
+                          );
+                          final sponsorQuery = _mergeQueries(
+                            state.search,
+                            state.sponsorFilter,
+                          );
 
                           return DataRow(
                             cells: [
-                              DataCell(Text(customer.name)),
-                              DataCell(Text(customer.phone)),
                               DataCell(
-                                Text(
-                                  customer.countryId == null
-                                      ? '-'
-                                      : (countryMap[customer.countryId] ??
-                                          customer.countryId.toString()),
+                                _buildHighlightedText(
+                                  customer.name,
+                                  state.search,
+                                  dataTextStyle,
+                                  highlightColor,
                                 ),
                               ),
                               DataCell(
-                                Text(memberStatusLabel(customer.memberStatus)),
+                                _buildHighlightedText(
+                                  customer.phone,
+                                  state.search,
+                                  dataTextStyle,
+                                  highlightColor,
+                                ),
                               ),
-                              DataCell(Text(centerAndSide)),
-                              DataCell(Text(customer.customerUsanaId ?? '-')),
-                              DataCell(Text(customer.sponsor ?? '-')),
+                              DataCell(
+                                _buildHighlightedText(
+                                  countryLabel,
+                                  state.search,
+                                  dataTextStyle,
+                                  highlightColor,
+                                ),
+                              ),
+                              DataCell(
+                                _buildHighlightedText(
+                                  memberStatus,
+                                  state.search,
+                                  dataTextStyle,
+                                  highlightColor,
+                                ),
+                              ),
+                              DataCell(
+                                _buildHighlightedText(
+                                  centerAndSide,
+                                  state.search,
+                                  dataTextStyle,
+                                  highlightColor,
+                                ),
+                              ),
+                              DataCell(
+                                _buildHighlightedText(
+                                  customer.customerUsanaId ?? '-',
+                                  state.search,
+                                  dataTextStyle,
+                                  highlightColor,
+                                ),
+                              ),
+                              DataCell(
+                                _buildHighlightedText(
+                                  customer.sponsor ?? '-',
+                                  sponsorQuery,
+                                  dataTextStyle,
+                                  highlightColor,
+                                ),
+                              ),
                               DataCell(
                                 SizedBox(
                                   width: 190,
@@ -219,6 +274,85 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
     );
   }
 
+  List<String> _tokenizeQuery(String query) {
+    return query
+        .toLowerCase()
+        .split(RegExp(r'\s+'))
+        .where((token) => token.isNotEmpty)
+        .toList();
+  }
+
+  String _mergeQueries(String first, String second) {
+    final parts = [
+      first.trim(),
+      second.trim(),
+    ].where((value) => value.isNotEmpty).toList();
+    return parts.join(' ');
+  }
+
+  Widget _buildHighlightedText(
+    String text,
+    String query,
+    TextStyle? style,
+    Color highlightColor,
+  ) {
+    final tokens = _tokenizeQuery(query);
+    if (tokens.isEmpty) {
+      return Text(text, style: style);
+    }
+    final lowerText = text.toLowerCase();
+    final ranges = <_HighlightRange>[];
+    for (final token in tokens) {
+      var start = 0;
+      while (start < lowerText.length) {
+        final index = lowerText.indexOf(token, start);
+        if (index == -1) break;
+        ranges.add(_HighlightRange(index, index + token.length));
+        start = index + token.length;
+      }
+    }
+    if (ranges.isEmpty) {
+      return Text(text, style: style);
+    }
+    ranges.sort((a, b) => a.start.compareTo(b.start));
+    final merged = <_HighlightRange>[];
+    var current = ranges.first;
+    for (var i = 1; i < ranges.length; i++) {
+      final next = ranges[i];
+      if (next.start <= current.end) {
+        current = _HighlightRange(
+          current.start,
+          next.end > current.end ? next.end : current.end,
+        );
+      } else {
+        merged.add(current);
+        current = next;
+      }
+    }
+    merged.add(current);
+    final spans = <TextSpan>[];
+    var cursor = 0;
+    final highlightStyle = (style ?? const TextStyle()).copyWith(
+      backgroundColor: highlightColor,
+    );
+    for (final range in merged) {
+      if (range.start > cursor) {
+        spans.add(TextSpan(text: text.substring(cursor, range.start)));
+      }
+      spans.add(
+        TextSpan(
+          text: text.substring(range.start, range.end),
+          style: highlightStyle,
+        ),
+      );
+      cursor = range.end;
+    }
+    if (cursor < text.length) {
+      spans.add(TextSpan(text: text.substring(cursor)));
+    }
+    return Text.rich(TextSpan(style: style, children: spans));
+  }
+
   Widget _buildFilters(
     BuildContext context,
     CustomersState state,
@@ -235,7 +369,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
           child: TextField(
             controller: _searchController,
             decoration: InputDecoration(
-              labelText: 'Search (name or phone)',
+              labelText: 'Search (name, phone, sponsor, ID, center, country)',
               prefixIcon: const Icon(Icons.search),
               suffixIcon: state.search.isNotEmpty
                   ? IconButton(
@@ -469,4 +603,11 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
       builder: (_) => CustomerAutoOrdersDialog(customer: customer),
     );
   }
+}
+
+class _HighlightRange {
+  const _HighlightRange(this.start, this.end);
+
+  final int start;
+  final int end;
 }

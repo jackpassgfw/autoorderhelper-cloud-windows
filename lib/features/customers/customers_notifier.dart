@@ -38,9 +38,7 @@ class CustomersNotifier extends StateNotifier<CustomersState> {
   Future<List<Customer>> _loadAllCustomers() async {
     final key = _buildCacheKey();
     if (_hasCache && _cacheKey == key) return _cachedCustomers;
-    final items = await _repository.fetchAllCustomers(
-      ordering: 'id',
-    );
+    final items = await _repository.fetchAllCustomers(ordering: 'id');
     _cachedCustomers = items;
     _cacheKey = key;
     _hasCache = true;
@@ -91,13 +89,17 @@ class CustomersNotifier extends StateNotifier<CustomersState> {
     try {
       final searchValue = state.search.trim();
       final sponsorValue = state.sponsorFilter.trim();
-      final requiresClientPaging = _useClientPaging ||
+      final requiresClientPaging =
+          _useClientPaging ||
           searchValue.isNotEmpty ||
           sponsorValue.isNotEmpty ||
           state.businessCenterFilter != null ||
           state.countryFilter != null;
       if (requiresClientPaging) {
-        await _loadCustomersClient(targetPage: targetPage, requestId: requestId);
+        await _loadCustomersClient(
+          targetPage: targetPage,
+          requestId: requestId,
+        );
         return;
       }
 
@@ -163,13 +165,20 @@ class CustomersNotifier extends StateNotifier<CustomersState> {
     required int requestId,
   }) async {
     final allItems = await _loadAllCustomers();
-    final searchValue = state.search.trim().toLowerCase();
-    final sponsorValue = state.sponsorFilter.trim().toLowerCase();
+    final searchTokens = _tokenizeQuery(state.search);
+    final sponsorTokens = _tokenizeQuery(state.sponsorFilter);
     final businessCenterId = state.businessCenterFilter;
     final countryId = state.countryFilter;
     final chinaCountryId = _findChinaCountryId();
+    final businessCenterMap = {
+      for (final center in state.businessCenters) center.id: center.name,
+    };
+    final countryMap = {
+      for (final country in state.countries) country.id: country.name,
+    };
     final filteredItems = allItems.where((item) {
-      if (businessCenterId != null && item.businessCenterId != businessCenterId) {
+      if (businessCenterId != null &&
+          item.businessCenterId != businessCenterId) {
         return false;
       }
       if (countryId != null) {
@@ -181,16 +190,32 @@ class CustomersNotifier extends StateNotifier<CustomersState> {
           return false;
         }
       }
-      if (searchValue.isNotEmpty) {
-        final name = item.name.toLowerCase();
-        final phone = item.phone.toLowerCase();
-        if (!name.contains(searchValue) && !phone.contains(searchValue)) {
+      if (searchTokens.isNotEmpty) {
+        final countryName = item.countryId == null
+            ? ''
+            : (countryMap[item.countryId] ?? item.countryId.toString());
+        final businessCenterName =
+            businessCenterMap[item.businessCenterId] ?? '';
+        final haystack = [
+          item.name,
+          item.phone,
+          item.sponsor ?? '',
+          item.customerUsanaId ?? '',
+          item.usanaUsername ?? '',
+          item.email ?? '',
+          item.address ?? '',
+          countryName,
+          memberStatusLabel(item.memberStatus),
+          businessCenterName,
+          businessCenterSideLabel(item.businessCenterSide),
+        ].join(' ').toLowerCase();
+        if (!_matchesTokens(haystack, searchTokens)) {
           return false;
         }
       }
-      if (sponsorValue.isNotEmpty) {
+      if (sponsorTokens.isNotEmpty) {
         final sponsor = (item.sponsor ?? '').toLowerCase();
-        if (!sponsor.contains(sponsorValue)) return false;
+        if (!_matchesTokens(sponsor, sponsorTokens)) return false;
       }
       return true;
     }).toList();
@@ -251,6 +276,33 @@ class CustomersNotifier extends StateNotifier<CustomersState> {
       }
     }
     return null;
+  }
+
+  List<String> _tokenizeQuery(String query) {
+    return query
+        .toLowerCase()
+        .split(RegExp(r'\s+'))
+        .where((token) => token.isNotEmpty)
+        .toList();
+  }
+
+  bool _matchesTokens(String text, List<String> tokens) {
+    for (final token in tokens) {
+      if (text.contains(token)) continue;
+      if (!_isSubsequence(token, text)) return false;
+    }
+    return true;
+  }
+
+  bool _isSubsequence(String pattern, String text) {
+    var patternIndex = 0;
+    for (var textIndex = 0; textIndex < text.length; textIndex++) {
+      if (patternIndex >= pattern.length) return true;
+      if (text[textIndex] == pattern[patternIndex]) {
+        patternIndex++;
+      }
+    }
+    return patternIndex >= pattern.length;
   }
 
   Future<String?> saveCustomer(CustomerFormData data) async {
