@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +21,10 @@ class AutoOrdersPage extends ConsumerStatefulWidget {
 }
 
 class _AutoOrdersPageState extends ConsumerState<AutoOrdersPage> {
+  final _searchController = TextEditingController();
+  Timer? _searchDebounce;
+  String _searchQuery = '';
+
   @override
   void initState() {
     super.initState();
@@ -31,15 +37,45 @@ class _AutoOrdersPageState extends ConsumerState<AutoOrdersPage> {
   }
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    _searchDebounce?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final state = ref.watch(autoOrdersNotifierProvider);
     final notifier = ref.watch(autoOrdersNotifierProvider.notifier);
     final repository = ref.watch(autoOrdersRepositoryProvider);
     final formatter = DateFormat('yyyy-MM-dd');
 
-    final items = state.statusFilter == null
-        ? state.items
-        : state.items.where((i) => i.status == state.statusFilter).toList();
+    var items = state.items;
+    final searchQuery = _searchQuery.trim().toLowerCase();
+    if (searchQuery.isNotEmpty) {
+      items = items.where((i) => _fuzzyMatchAutoOrder(i, searchQuery)).toList();
+    }
+    if (state.statusFilter != null) {
+      items = items.where((i) => i.status == state.statusFilter).toList();
+    }
+    if (state.cycleFilter != null) {
+      final cycleFilter = state.cycleFilter!;
+      items =
+          items
+              .where(
+                (i) =>
+                    i.cycleValue == cycleFilter.value &&
+                    i.cycleColor == cycleFilter.color,
+              )
+              .toList();
+    }
+    if (state.dateRangeFilter != null) {
+      final range = state.dateRangeFilter!;
+      items = items
+          .where((i) => _isWithinDateRange(i.deductionDate, range))
+          .toList();
+    }
+    final cycleOptions = _buildCycleOptions(state);
     final totalPages = (state.meta.total / state.meta.pageSize).ceil().clamp(
       1,
       1000000,
@@ -61,6 +97,28 @@ class _AutoOrdersPageState extends ConsumerState<AutoOrdersPage> {
               Wrap(
                 spacing: 8,
                 children: [
+                  SizedBox(
+                    width: 240,
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        labelText: 'Search',
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: searchQuery.isEmpty
+                            ? null
+                            : IconButton(
+                                tooltip: 'Clear search',
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  _searchDebounce?.cancel();
+                                  setState(() => _searchQuery = '');
+                                },
+                              ),
+                      ),
+                      onChanged: _onSearchChanged,
+                    ),
+                  ),
                   DropdownButton<ScheduleStatus?>(
                     value: state.statusFilter,
                     hint: const Text('All statuses'),
@@ -84,6 +142,38 @@ class _AutoOrdersPageState extends ConsumerState<AutoOrdersPage> {
                       ),
                     ],
                   ),
+                  DropdownButton<CycleFilter?>(
+                    value: state.cycleFilter,
+                    hint: const Text('All cycles'),
+                    onChanged: notifier.updateCycleFilter,
+                    items: [
+                      const DropdownMenuItem<CycleFilter?>(
+                        value: null,
+                        child: Text('All cycles'),
+                      ),
+                      ...cycleOptions.map(
+                        (option) => DropdownMenuItem(
+                          value: option,
+                          child: Text(option.label()),
+                        ),
+                      ),
+                    ],
+                  ),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.date_range),
+                    label: Text(
+                      state.dateRangeFilter == null
+                          ? 'All dates'
+                          : _formatDateRange(state.dateRangeFilter!, formatter),
+                    ),
+                    onPressed: () => _selectDateRange(context, notifier, state),
+                  ),
+                  if (state.dateRangeFilter != null)
+                    IconButton(
+                      tooltip: 'Clear date range',
+                      icon: const Icon(Icons.clear),
+                      onPressed: () => notifier.updateDateRangeFilter(null),
+                    ),
                   FilledButton.icon(
                     icon: const Icon(Icons.add),
                     label: const Text('New Auto Order'),
@@ -146,10 +236,26 @@ class _AutoOrdersPageState extends ConsumerState<AutoOrdersPage> {
                         rows: items.map((order) {
                           return DataRow(
                             cells: [
-                              DataCell(Text(order.customerName)),
-                              DataCell(Text(order.customerUsanaId)),
                               DataCell(
-                                Text(formatter.format(order.deductionDate)),
+                                _buildHighlightedText(
+                                  context,
+                                  order.customerName,
+                                  searchQuery,
+                                ),
+                              ),
+                              DataCell(
+                                _buildHighlightedText(
+                                  context,
+                                  order.customerUsanaId,
+                                  searchQuery,
+                                ),
+                              ),
+                              DataCell(
+                                _buildHighlightedText(
+                                  context,
+                                  formatter.format(order.deductionDate),
+                                  searchQuery,
+                                ),
                               ),
                               DataCell(
                                 Row(
@@ -244,6 +350,95 @@ class _AutoOrdersPageState extends ConsumerState<AutoOrdersPage> {
         ],
       ),
     );
+  }
+
+  void _onSearchChanged(String value) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      setState(() => _searchQuery = value);
+    });
+  }
+
+  bool _fuzzyMatchAutoOrder(AutoOrder order, String query) {
+    final haystack = [
+      order.customerName,
+      order.customerUsanaId,
+      DateFormat('yyyy-MM-dd').format(order.deductionDate),
+    ].join(' ').toLowerCase();
+    return _fuzzyMatch(haystack, query);
+  }
+
+  bool _fuzzyMatch(String text, String query) {
+    if (query.isEmpty) return true;
+    var queryIndex = 0;
+    for (var i = 0; i < text.length; i++) {
+      if (text[i] == query[queryIndex]) {
+        queryIndex++;
+        if (queryIndex == query.length) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  List<int>? _fuzzyMatchIndices(String text, String query) {
+    if (query.isEmpty) return const <int>[];
+    final lowerText = text.toLowerCase();
+    var queryIndex = 0;
+    final matched = <int>[];
+
+    for (var i = 0; i < lowerText.length; i++) {
+      if (lowerText[i] == query[queryIndex]) {
+        matched.add(i);
+        queryIndex++;
+        if (queryIndex == query.length) {
+          return matched;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  Widget _buildHighlightedText(
+    BuildContext context,
+    String text,
+    String query,
+  ) {
+    if (query.isEmpty) {
+      return Text(text);
+    }
+
+    final matches = _fuzzyMatchIndices(text, query);
+    if (matches == null || matches.isEmpty) {
+      return Text(text);
+    }
+
+    final matchSet = matches.toSet();
+    final spans = <TextSpan>[];
+    final baseStyle = DefaultTextStyle.of(context).style;
+    final highlightStyle = baseStyle.copyWith(
+      fontWeight: FontWeight.w600,
+      decoration: TextDecoration.underline,
+      backgroundColor: Colors.yellow,
+    );
+
+    var start = 0;
+    var isMatch = matchSet.contains(0);
+    for (var i = 1; i <= text.length; i++) {
+      final currentMatch = i < text.length && matchSet.contains(i);
+      if (currentMatch == isMatch && i < text.length) continue;
+      final segment = text.substring(start, i);
+      spans.add(
+        TextSpan(text: segment, style: isMatch ? highlightStyle : baseStyle),
+      );
+      start = i;
+      isMatch = currentMatch;
+    }
+
+    return RichText(text: TextSpan(text: '', style: baseStyle, children: spans));
   }
 
   Future<void> _openForm(
@@ -425,6 +620,212 @@ class _AutoOrdersPageState extends ConsumerState<AutoOrdersPage> {
       case CycleColor.yellow:
         return Colors.orange;
     }
+  }
+
+  bool _isWithinDateRange(DateTime date, DateTimeRange range) {
+    final dateOnly = DateTime(date.year, date.month, date.day);
+    final start = DateTime(
+      range.start.year,
+      range.start.month,
+      range.start.day,
+    );
+    final end = DateTime(range.end.year, range.end.month, range.end.day);
+    return !dateOnly.isBefore(start) && !dateOnly.isAfter(end);
+  }
+
+  String _formatDateRange(DateTimeRange range, DateFormat formatter) {
+    return '${formatter.format(range.start)} - ${formatter.format(range.end)}';
+  }
+
+  Future<void> _selectDateRange(
+    BuildContext context,
+    AutoOrdersNotifier notifier,
+    AutoOrdersState state,
+  ) async {
+    final picked = await _showDateRangeDialog(
+      context,
+      initialRange: state.dateRangeFilter,
+    );
+    if (picked == null) return;
+    notifier.updateDateRangeFilter(picked);
+  }
+
+  Future<DateTimeRange?> _showDateRangeDialog(
+    BuildContext context, {
+    DateTimeRange? initialRange,
+  }) {
+    final today = DateTime.now();
+    final start =
+        initialRange?.start ?? DateTime(today.year, today.month, today.day);
+    final end = initialRange?.end ?? start;
+
+    return showDialog<DateTimeRange>(
+      context: context,
+      builder: (dialogContext) {
+        final formatter = DateFormat('yyyy-MM-dd');
+        final startController = TextEditingController(
+          text: formatter.format(start),
+        );
+        final endController = TextEditingController(
+          text: formatter.format(end),
+        );
+        var tempStart = start;
+        var tempEnd = end;
+        String? rangeError;
+
+        Future<void> pickStartDate() async {
+          final picked = await showDatePicker(
+            context: dialogContext,
+            initialDate: tempStart,
+            firstDate: DateTime(2000),
+            lastDate: DateTime(2100),
+          );
+          if (picked == null) return;
+          tempStart = picked;
+          if (tempEnd.isBefore(tempStart)) {
+            tempEnd = tempStart;
+          }
+          startController.text = formatter.format(tempStart);
+          endController.text = formatter.format(tempEnd);
+          rangeError = null;
+        }
+
+        Future<void> pickEndDate() async {
+          final picked = await showDatePicker(
+            context: dialogContext,
+            initialDate: tempEnd,
+            firstDate: DateTime(2000),
+            lastDate: DateTime(2100),
+          );
+          if (picked == null) return;
+          tempEnd = picked;
+          if (tempEnd.isBefore(tempStart)) {
+            tempStart = tempEnd;
+          }
+          startController.text = formatter.format(tempStart);
+          endController.text = formatter.format(tempEnd);
+          rangeError = null;
+        }
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Select date range'),
+              content: SizedBox(
+                width: 420,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (rangeError != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          rangeError!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      ),
+                    TextFormField(
+                      controller: startController,
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        labelText: 'Start date',
+                        suffixIcon: IconButton(
+                          tooltip: 'Pick start date',
+                          icon: const Icon(Icons.calendar_today),
+                          onPressed: () async {
+                            await pickStartDate();
+                            setState(() {});
+                          },
+                        ),
+                      ),
+                      onTap: () async {
+                        await pickStartDate();
+                        setState(() {});
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: endController,
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        labelText: 'End date',
+                        suffixIcon: IconButton(
+                          tooltip: 'Pick end date',
+                          icon: const Icon(Icons.calendar_today),
+                          onPressed: () async {
+                            await pickEndDate();
+                            setState(() {});
+                          },
+                        ),
+                      ),
+                      onTap: () async {
+                        await pickEndDate();
+                        setState(() {});
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    if (tempEnd.isBefore(tempStart)) {
+                      setState(() {
+                        rangeError = 'End date must be on or after start date.';
+                      });
+                      return;
+                    }
+                    Navigator.pop(
+                      dialogContext,
+                      DateTimeRange(start: tempStart, end: tempEnd),
+                    );
+                  },
+                  child: const Text('Apply'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  String _cycleKey(int value, CycleColor color) => '$value|${color.name}';
+
+  List<CycleFilter> _buildCycleOptions(AutoOrdersState state) {
+    final optionsByKey = <String, CycleFilter>{};
+
+    void addOption(CycleFilter option) {
+      optionsByKey.putIfAbsent(_cycleKey(option.value, option.color), () {
+        return option;
+      });
+    }
+
+    for (final item in state.items) {
+      addOption(CycleFilter(value: item.cycleValue, color: item.cycleColor));
+    }
+    for (final option in state.deductionOptions) {
+      addOption(
+        CycleFilter(value: option.cycleValue, color: option.cycleColor),
+      );
+    }
+    if (state.cycleFilter != null) {
+      addOption(state.cycleFilter!);
+    }
+
+    final options = optionsByKey.values.toList()
+      ..sort((a, b) {
+        final byValue = a.value.compareTo(b.value);
+        if (byValue != 0) return byValue;
+        return a.color.name.compareTo(b.color.name);
+      });
+    return options;
   }
 }
 

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api_client.dart';
@@ -59,6 +60,25 @@ class AutoOrdersNotifier extends StateNotifier<AutoOrdersState> {
   void updateStatusFilter(ScheduleStatus? status) {
     state = state.copyWith(
       statusFilter: status,
+      clearStatusFilter: status == null,
+      meta: const PaginationMeta(page: 1, pageSize: 10, total: 0),
+    );
+    loadAutoOrders(page: 1);
+  }
+
+  void updateCycleFilter(CycleFilter? filter) {
+    state = state.copyWith(
+      cycleFilter: filter,
+      clearCycleFilter: filter == null,
+      meta: const PaginationMeta(page: 1, pageSize: 10, total: 0),
+    );
+    loadAutoOrders(page: 1);
+  }
+
+  void updateDateRangeFilter(DateTimeRange? range) {
+    state = state.copyWith(
+      dateRangeFilter: range,
+      clearDateRangeFilter: range == null,
       meta: const PaginationMeta(page: 1, pageSize: 10, total: 0),
     );
     loadAutoOrders(page: 1);

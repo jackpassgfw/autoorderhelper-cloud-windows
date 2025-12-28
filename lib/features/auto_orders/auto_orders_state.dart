@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 import '../customers/models.dart';
 import 'models.dart';
 
@@ -9,6 +11,8 @@ class AutoOrdersState {
     required this.isSubmitting,
     required this.errorMessage,
     required this.statusFilter,
+    required this.cycleFilter,
+    required this.dateRangeFilter,
     required this.customers,
     required this.deductionOptions,
   });
@@ -19,6 +23,8 @@ class AutoOrdersState {
   final bool isSubmitting;
   final String? errorMessage;
   final ScheduleStatus? statusFilter;
+  final CycleFilter? cycleFilter;
+  final DateTimeRange? dateRangeFilter;
   final List<Customer> customers;
   final List<DeductionOption> deductionOptions;
 
@@ -30,6 +36,10 @@ class AutoOrdersState {
     String? errorMessage,
     ScheduleStatus? statusFilter,
     bool clearStatusFilter = false,
+    CycleFilter? cycleFilter,
+    bool clearCycleFilter = false,
+    DateTimeRange? dateRangeFilter,
+    bool clearDateRangeFilter = false,
     List<Customer>? customers,
     List<DeductionOption>? deductionOptions,
   }) {
@@ -42,6 +52,12 @@ class AutoOrdersState {
       statusFilter: clearStatusFilter
           ? null
           : (statusFilter ?? this.statusFilter),
+      cycleFilter: clearCycleFilter
+          ? null
+          : (cycleFilter ?? this.cycleFilter),
+      dateRangeFilter: clearDateRangeFilter
+          ? null
+          : (dateRangeFilter ?? this.dateRangeFilter),
       customers: customers ?? this.customers,
       deductionOptions: deductionOptions ?? this.deductionOptions,
     );
@@ -55,6 +71,8 @@ class AutoOrdersState {
       isSubmitting: false,
       errorMessage: null,
       statusFilter: null,
+      cycleFilter: null,
+      dateRangeFilter: null,
       customers: const [],
       deductionOptions: const [],
     );

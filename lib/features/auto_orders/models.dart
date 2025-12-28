@@ -50,6 +50,26 @@ CycleColor cycleColorFromJson(String value) {
   }
 }
 
+class CycleFilter {
+  const CycleFilter({required this.value, required this.color});
+
+  final int value;
+  final CycleColor color;
+
+  String label() => 'Cycle $value - ${color.name}';
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CycleFilter &&
+          runtimeType == other.runtimeType &&
+          value == other.value &&
+          color == other.color;
+
+  @override
+  int get hashCode => Object.hash(value, color);
+}
+
 class AutoOrder {
   AutoOrder({
     required this.id,
