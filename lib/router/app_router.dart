@@ -13,6 +13,7 @@ import '../features/cart/cart_page.dart';
 import '../features/categories/categories_page.dart';
 import '../features/countries/countries_page.dart';
 import '../features/customers/customers_page.dart';
+import '../features/deliveries/deliveries_page.dart';
 import '../features/previews/previews_page.dart';
 import '../features/products/products_page.dart';
 import '../features/settings/settings_page.dart';
@@ -67,6 +68,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             name: 'cart',
             pageBuilder: (context, state) =>
                 const MaterialPage(child: CartPage()),
+          ),
+          GoRoute(
+            path: '/deliveries',
+            name: 'deliveries',
+            pageBuilder: (context, state) =>
+                const MaterialPage(child: DeliveriesPage()),
           ),
           GoRoute(
             path: '/categories',
