@@ -174,8 +174,7 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
                               : 'No products match your search',
                         ),
                       )
-                    : SelectionContainer.disabled(
-                        child: ListView(
+                    : ListView(
                           padding: const EdgeInsets.all(8),
                           children: [
                             for (final group in groups)
@@ -523,7 +522,6 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
                               ),
                           ],
                         ),
-                      ),
               ),
             ),
           ],

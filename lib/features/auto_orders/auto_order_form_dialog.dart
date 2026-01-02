@@ -43,6 +43,7 @@ class _AutoOrderFormDialogState extends ConsumerState<AutoOrderFormDialog> {
   late final TextEditingController _pointsController;
   late final TextEditingController _freightFeeController;
   late final TextEditingController _discountController;
+  late final TextEditingController _customerDropdownController;
   String? _errorMessage;
   bool _isUploading = false;
 
@@ -54,6 +55,7 @@ class _AutoOrderFormDialogState extends ConsumerState<AutoOrderFormDialog> {
     super.initState();
     _data = widget.initialData;
     _noteController = TextEditingController(text: _data.note);
+    _customerDropdownController = TextEditingController();
     _memberPriceController = TextEditingController(
       text: _data.memberPrice?.toString() ?? '',
     );
@@ -74,6 +76,7 @@ class _AutoOrderFormDialogState extends ConsumerState<AutoOrderFormDialog> {
         (c) => c.id == _data.customerId,
         orElse: () => widget.customers.first,
       );
+      _customerDropdownController.text = _customerLabel(selectedCustomer!);
     }
 
     if (widget.deductionOptions.isNotEmpty) {
@@ -87,6 +90,7 @@ class _AutoOrderFormDialogState extends ConsumerState<AutoOrderFormDialog> {
   @override
   void dispose() {
     _noteController.dispose();
+    _customerDropdownController.dispose();
     _memberPriceController.dispose();
     _autoorderPriceController.dispose();
     _pointsController.dispose();
@@ -143,77 +147,139 @@ class _AutoOrderFormDialogState extends ConsumerState<AutoOrderFormDialog> {
 
     return AlertDialog(
       title: Text(_data.id == null ? 'New Auto Order' : 'Edit Auto Order'),
-      content: SizedBox(
-        width: 560,
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_errorMessage != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(
-                    _errorMessage!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
-                ),
-              if (_data.id == null)
-                DropdownButtonFormField<Customer>(
-                  initialValue: selectedCustomer,
-                  decoration: const InputDecoration(labelText: 'Customer'),
-                  items: widget.customers
-                      .map(
-                        (c) => DropdownMenuItem<Customer>(
-                          value: c,
-                          child: Text(
-                            '${c.name} (${c.customerUsanaId ?? '-'})',
-                          ),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (c) {
-                    setState(() {
-                      selectedCustomer = c;
-                      if (c != null) {
-                        _data.customerName = c.name;
-                        _data.customerUsanaId = c.customerUsanaId ?? '';
-                      }
-                    });
-                  },
-                  validator: (value) =>
-                      value == null ? 'Select a customer' : null,
-                )
-              else
-                Row(
-                  children: [
-                    Expanded(
-                      child: InputDecorator(
-                        decoration: const InputDecoration(labelText: 'Customer'),
-                        child: Text(
-                          selectedCustomer == null
-                              ? '-'
-                              : '${selectedCustomer!.name} (${selectedCustomer!.customerUsanaId ?? '-'})',
-                        ),
+      content: SelectionArea(
+        child: SizedBox(
+          width: 560,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_errorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      _errorMessage!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      onPressed: selectedCustomer == null
-                          ? null
-                          : () => _openCustomerForm(
-                                context,
-                                selectedCustomer!,
+                  ),
+                if (_data.id == null)
+                  FormField<Customer>(
+                    initialValue: selectedCustomer,
+                    validator: (value) =>
+                        value == null ? 'Select a customer' : null,
+                    builder: (field) {
+                      final colorScheme = Theme.of(context).colorScheme;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          DropdownMenuTheme(
+                            data: DropdownMenuThemeData(
+                              inputDecorationTheme: InputDecorationTheme(
+                                filled: true,
+                                fillColor:
+                                    colorScheme.surfaceVariant.withOpacity(0.4),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
-                      icon: const Icon(Icons.open_in_new),
-                      label: const Text('Show customer'),
-                    ),
-                  ],
-                ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<DeductionOption>(
+                            ),
+                            child: DropdownMenu<Customer>(
+                              controller: _customerDropdownController,
+                              initialSelection: selectedCustomer,
+                              requestFocusOnTap: true,
+                              enableFilter: true,
+                              enableSearch: true,
+                              leadingIcon: const Icon(Icons.person_outline),
+                              hintText: 'Search customers',
+                              label: const Text('Customer'),
+                              menuHeight: 320,
+                              width: 520,
+                              menuStyle: MenuStyle(
+                                elevation: const MaterialStatePropertyAll(6),
+                                backgroundColor: MaterialStatePropertyAll(
+                                  colorScheme.surface,
+                                ),
+                                shape: MaterialStatePropertyAll(
+                                  RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                              onSelected: (customer) {
+                                setState(() {
+                                  selectedCustomer = customer;
+                                  if (customer != null) {
+                                    _data.customerId = customer.id;
+                                    _data.customerName = customer.name;
+                                    _data.customerUsanaId =
+                                        customer.customerUsanaId ?? '';
+                                    _customerDropdownController.text =
+                                        _customerLabel(customer);
+                                  }
+                                });
+                                field.didChange(customer);
+                              },
+                              dropdownMenuEntries: [
+                                for (final customer in widget.customers)
+                                  DropdownMenuEntry<Customer>(
+                                    value: customer,
+                                    label: _customerLabel(customer),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          if (field.hasError)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 6, left: 12),
+                              child: Text(
+                                field.errorText!,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  )
+                else
+                  Row(
+                    children: [
+                      Expanded(
+                        child: InputDecorator(
+                          decoration: const InputDecoration(
+                            labelText: 'Customer',
+                          ),
+                          child: Text(
+                            selectedCustomer == null
+                                ? '-'
+                                : _customerLabel(selectedCustomer!),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      OutlinedButton.icon(
+                        onPressed: selectedCustomer == null
+                            ? null
+                            : () => _openCustomerForm(
+                                  context,
+                                  selectedCustomer!,
+                                ),
+                        icon: const Icon(Icons.open_in_new),
+                        label: const Text('Show customer'),
+                      ),
+                    ],
+                  ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<DeductionOption>(
                 initialValue: selectedOption,
                 decoration: const InputDecoration(labelText: 'Deduction date'),
                 items: widget.deductionOptions
@@ -436,7 +502,8 @@ class _AutoOrderFormDialogState extends ConsumerState<AutoOrderFormDialog> {
                     ],
                   ),
                 ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -532,6 +599,10 @@ class _AutoOrderFormDialogState extends ConsumerState<AutoOrderFormDialog> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
+  }
+
+  String _customerLabel(Customer customer) {
+    return '${customer.name} (${customer.customerUsanaId ?? '-'})';
   }
 
   Future<void> _openCustomerForm(BuildContext context, Customer customer) async {
