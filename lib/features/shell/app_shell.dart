@@ -110,30 +110,32 @@ class AppShell extends ConsumerWidget {
           ),
         ],
       ),
-      body: Row(
-        children: [
-          NavigationRail(
-            selectedIndex: selectedIndex == -1 ? 0 : selectedIndex,
-            onDestinationSelected: (index) {
-              final destination = _destinations[index];
-              context.go(destination.path);
-            },
-            labelType: NavigationRailLabelType.all,
-            destinations: [
-              for (final destination in _destinations)
-                NavigationRailDestination(
-                  icon: _buildNavIcon(
-                    destination,
-                    cartState.itemCount,
-                    Theme.of(context).colorScheme,
+      body: SelectionArea(
+        child: Row(
+          children: [
+            NavigationRail(
+              selectedIndex: selectedIndex == -1 ? 0 : selectedIndex,
+              onDestinationSelected: (index) {
+                final destination = _destinations[index];
+                context.go(destination.path);
+              },
+              labelType: NavigationRailLabelType.all,
+              destinations: [
+                for (final destination in _destinations)
+                  NavigationRailDestination(
+                    icon: _buildNavIcon(
+                      destination,
+                      cartState.itemCount,
+                      Theme.of(context).colorScheme,
+                    ),
+                    label: Text(destination.label),
                   ),
-                  label: Text(destination.label),
-                ),
-            ],
-          ),
-          const VerticalDivider(width: 1),
-          Expanded(child: child),
-        ],
+              ],
+            ),
+            const VerticalDivider(width: 1),
+            Expanded(child: child),
+          ],
+        ),
       ),
     );
   }

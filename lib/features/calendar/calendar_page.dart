@@ -165,10 +165,10 @@ class _MonthGrid extends StatelessWidget {
     final daysInMonth = lastDay.day;
     final totalCells = firstWeekday + daysInMonth;
     final rows = (totalCells / 7).ceil();
-    final gridStart = firstDay.subtract(Duration(days: firstWeekday));
+    final gridStartDay = 1 - firstWeekday;
     final days = List<DateTime>.generate(
       rows * 7,
-      (index) => gridStart.add(Duration(days: index)),
+      (index) => DateTime(month.year, month.month, gridStartDay + index),
     );
 
     return Column(

@@ -96,113 +96,118 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final env = ref.watch(appEnvironmentProvider);
 
     return Scaffold(
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
-          child: Card(
-            elevation: 4,
-            margin: const EdgeInsets.all(24),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'Auto Order Helper',
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Flutter Desktop Client (${env.label})',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.labelLarge?.copyWith(color: Colors.grey[700]),
-                    ),
-                    const SizedBox(height: 24),
-                    TextFormField(
-                      controller: _emailController,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.email_outlined),
+      body: SelectionArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Card(
+              elevation: 4,
+              margin: const EdgeInsets.all(24),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Auto Order Helper',
+                        style: Theme.of(context).textTheme.headlineMedium,
                       ),
-                      keyboardType: TextInputType.emailAddress,
-                      autofillHints: const [AutofillHints.username],
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Email is required';
-                        }
-                        if (!value.contains('@')) {
-                          return 'Enter a valid email';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _passwordController,
-                      decoration: const InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: Icon(Icons.lock_outline),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Flutter Desktop Client (${env.label})',
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelLarge
+                            ?.copyWith(color: Colors.grey[700]),
                       ),
-                      obscureText: true,
-                      autofillHints: const [AutofillHints.password],
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Password is required';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: _rememberMe,
-                          onChanged: _loadingSaved
-                              ? null
-                              : (val) async {
-                                  final next = val ?? false;
-                                  setState(() => _rememberMe = next);
-                                  if (!next) {
-                                    await _clearSaved();
-                                  } else {
-                                    await _persistRemember(
-                                      _emailController.text.trim(),
-                                      _passwordController.text,
-                                    );
-                                  }
-                                },
+                      const SizedBox(height: 24),
+                      TextFormField(
+                        controller: _emailController,
+                        decoration: const InputDecoration(
+                          labelText: 'Email',
+                          prefixIcon: Icon(Icons.email_outlined),
                         ),
-                        const Text('Remember password'),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    if (authState.errorMessage != null)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Text(
-                          authState.errorMessage!,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
-                            fontWeight: FontWeight.w600,
+                        keyboardType: TextInputType.emailAddress,
+                        autofillHints: const [AutofillHints.username],
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Email is required';
+                          }
+                          if (!value.contains('@')) {
+                            return 'Enter a valid email';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _passwordController,
+                        decoration: const InputDecoration(
+                          labelText: 'Password',
+                          prefixIcon: Icon(Icons.lock_outline),
+                        ),
+                        obscureText: true,
+                        autofillHints: const [AutofillHints.password],
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Password is required';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: _rememberMe,
+                            onChanged: _loadingSaved
+                                ? null
+                                : (val) async {
+                                    final next = val ?? false;
+                                    setState(() => _rememberMe = next);
+                                    if (!next) {
+                                      await _clearSaved();
+                                    } else {
+                                      await _persistRemember(
+                                        _emailController.text.trim(),
+                                        _passwordController.text,
+                                      );
+                                    }
+                                  },
+                          ),
+                          const Text('Remember password'),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      if (authState.errorMessage != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Text(
+                            authState.errorMessage!,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
+                      const SizedBox(height: 8),
+                      FilledButton(
+                        onPressed: authState.isLoading ? null : _submit,
+                        child: authState.isLoading
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text('Sign in'),
                       ),
-                    const SizedBox(height: 8),
-                    FilledButton(
-                      onPressed: authState.isLoading ? null : _submit,
-                      child: authState.isLoading
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Sign in'),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

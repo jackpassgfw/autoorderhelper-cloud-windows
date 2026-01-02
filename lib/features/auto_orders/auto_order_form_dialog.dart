@@ -78,7 +78,7 @@ class _AutoOrderFormDialogState extends ConsumerState<AutoOrderFormDialog> {
 
     if (widget.deductionOptions.isNotEmpty) {
       selectedOption = widget.deductionOptions.firstWhere(
-        (opt) => opt.date == _data.deductionDate,
+        (opt) => DateUtils.isSameDay(opt.date, _data.deductionDate),
         orElse: () => widget.deductionOptions.first,
       );
     }

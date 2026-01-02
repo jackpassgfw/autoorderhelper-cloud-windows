@@ -563,7 +563,7 @@ class _AutoOrdersPageState extends ConsumerState<AutoOrdersPage> {
     int cycleValue,
     CycleColor cycleColor,
   ) {
-    final exists = options.any((o) => o.date == date);
+    final exists = options.any((o) => DateUtils.isSameDay(o.date, date));
     if (exists) return options;
     return [
       DeductionOption(

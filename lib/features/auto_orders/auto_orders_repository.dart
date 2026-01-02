@@ -137,8 +137,14 @@ class AutoOrdersRepository {
     final extended = List<DeductionOption>.from(options);
     final last = extended[extended.length - 1];
     final prev = extended[extended.length - 2];
-    final delta = last.date.difference(prev.date);
-    if (delta.inDays == 0) return options;
+    final deltaDays = DateTime.utc(
+          last.date.year,
+          last.date.month,
+          last.date.day,
+        ).difference(
+          DateTime.utc(prev.date.year, prev.date.month, prev.date.day),
+        ).inDays;
+    if (deltaDays == 0) return options;
 
     final cyclePairs = <MapEntry<int, CycleColor>>[];
     for (final option in extended) {
@@ -160,9 +166,14 @@ class AutoOrdersRepository {
     while (extended.length < targetCount) {
       pairIndex = (pairIndex + 1) % cyclePairs.length;
       final nextPair = cyclePairs[pairIndex];
+      final lastDate = extended.last.date;
       extended.add(
         DeductionOption(
-          date: extended.last.date.add(delta),
+          date: DateTime(
+            lastDate.year,
+            lastDate.month,
+            lastDate.day + deltaDays,
+          ),
           cycleValue: nextPair.key,
           cycleColor: nextPair.value,
         ),
