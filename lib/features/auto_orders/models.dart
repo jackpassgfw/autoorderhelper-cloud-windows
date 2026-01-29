@@ -2,7 +2,7 @@ import 'package:intl/intl.dart';
 
 import '../customers/models.dart';
 
-enum ScheduleStatus { active, paused, cancelled }
+enum ScheduleStatus { active, paused, cancelled, done }
 
 ScheduleStatus scheduleStatusFromJson(String value) {
   switch (value) {
@@ -12,6 +12,8 @@ ScheduleStatus scheduleStatusFromJson(String value) {
       return ScheduleStatus.paused;
     case 'cancelled':
       return ScheduleStatus.cancelled;
+    case 'done':
+      return ScheduleStatus.done;
     default:
       return ScheduleStatus.active;
   }
@@ -22,6 +24,7 @@ String scheduleStatusToJson(ScheduleStatus status) {
     ScheduleStatus.active => 'active',
     ScheduleStatus.paused => 'paused',
     ScheduleStatus.cancelled => 'cancelled',
+    ScheduleStatus.done => 'done',
   };
 }
 
@@ -30,6 +33,7 @@ String scheduleStatusLabel(ScheduleStatus status) {
     ScheduleStatus.active => 'Active',
     ScheduleStatus.paused => 'Paused',
     ScheduleStatus.cancelled => 'Cancelled',
+    ScheduleStatus.done => 'Done',
   };
 }
 

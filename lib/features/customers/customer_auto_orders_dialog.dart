@@ -58,6 +58,7 @@ class _CustomerAutoOrdersDialogState
             const widths = _TableWidths(
               deduction: 120,
               cycle: 120,
+              status: 90,
               memberPrice: 110,
               autoOrderPrice: 120,
               points: 90,
@@ -326,6 +327,7 @@ class _TableWidths {
   const _TableWidths({
     required this.deduction,
     required this.cycle,
+    required this.status,
     required this.memberPrice,
     required this.autoOrderPrice,
     required this.points,
@@ -335,6 +337,7 @@ class _TableWidths {
 
   final double deduction;
   final double cycle;
+  final double status;
   final double memberPrice;
   final double autoOrderPrice;
   final double points;
@@ -365,6 +368,7 @@ class _WideTable extends StatelessWidget {
           children: [
             _header('Deduction Date', widths.deduction, context),
             _header('Cycle', widths.cycle, context),
+            _header('Status', widths.status, context),
             _header('Member Price', widths.memberPrice, context),
             _header('AutoOrder Price', widths.autoOrderPrice, context),
             _header('Points', widths.points, context),
@@ -439,6 +443,10 @@ class _WideRow extends StatelessWidget {
               child: Text(
                 'Cycle ${order.cycleValue}  ${order.cycleColor.name}',
               ),
+            ),
+            SizedBox(
+              width: widths.status,
+              child: Text(scheduleStatusLabel(order.status)),
             ),
             SizedBox(
               width: widths.memberPrice,
@@ -523,6 +531,7 @@ class _NarrowCards extends StatelessWidget {
                   'Cycle',
                   'Cycle ${order.cycleValue}  ${order.cycleColor.name}',
                 ),
+                _row('Status', scheduleStatusLabel(order.status)),
                 _row('Member Price', _formatNumber(order.memberPrice)),
                 _row('AutoOrder Price', _formatNumber(order.autoorderPrice)),
                 _row('Points', order.points?.toString() ?? '-'),

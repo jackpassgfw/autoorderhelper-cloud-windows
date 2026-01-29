@@ -214,7 +214,9 @@ class _PreviewList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final grouped = _groupByDate(occurrences);
+    final activeOccurrences =
+        occurrences.where((occ) => occ.status == ScheduleStatus.active).toList();
+    final grouped = _groupByDate(activeOccurrences);
 
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());

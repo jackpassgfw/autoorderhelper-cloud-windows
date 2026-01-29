@@ -51,12 +51,11 @@ class _AutoOrdersPageState extends ConsumerState<AutoOrdersPage> {
     final formatter = DateFormat('yyyy-MM-dd');
 
     var items = state.items;
+    items =
+        items.where((i) => i.status == ScheduleStatus.active).toList();
     final searchQuery = _searchQuery.trim().toLowerCase();
     if (searchQuery.isNotEmpty) {
       items = items.where((i) => _fuzzyMatchAutoOrder(i, searchQuery)).toList();
-    }
-    if (state.statusFilter != null) {
-      items = items.where((i) => i.status == state.statusFilter).toList();
     }
     if (state.cycleFilter != null) {
       final cycleFilter = state.cycleFilter!;
@@ -119,26 +118,13 @@ class _AutoOrdersPageState extends ConsumerState<AutoOrdersPage> {
                       onChanged: _onSearchChanged,
                     ),
                   ),
-                  DropdownButton<ScheduleStatus?>(
-                    value: state.statusFilter,
-                    hint: const Text('All statuses'),
-                    onChanged: notifier.updateStatusFilter,
+                  DropdownButton<ScheduleStatus>(
+                    value: ScheduleStatus.active,
+                    onChanged: null,
                     items: const [
-                      DropdownMenuItem<ScheduleStatus?>(
-                        value: null,
-                        child: Text('All statuses'),
-                      ),
                       DropdownMenuItem(
                         value: ScheduleStatus.active,
                         child: Text('Active'),
-                      ),
-                      DropdownMenuItem(
-                        value: ScheduleStatus.paused,
-                        child: Text('Paused'),
-                      ),
-                      DropdownMenuItem(
-                        value: ScheduleStatus.cancelled,
-                        child: Text('Cancelled'),
                       ),
                     ],
                   ),
