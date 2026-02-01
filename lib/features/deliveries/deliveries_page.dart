@@ -26,6 +26,11 @@ class _DeliveriesPageState extends ConsumerState<DeliveriesPage> {
     final state = ref.watch(deliveriesNotifierProvider);
     final notifier = ref.watch(deliveriesNotifierProvider.notifier);
     final dateFormatter = DateFormat('yyyy-MM-dd');
+    final sortedItems = [...state.items]
+      ..sort(
+        (a, b) => (b.pickupDate ?? DateTime.fromMillisecondsSinceEpoch(0))
+            .compareTo(a.pickupDate ?? DateTime.fromMillisecondsSinceEpoch(0)),
+      );
 
     final currentPage = state.meta.page;
     final hasKnownTotal = state.meta.total > 0;
@@ -125,7 +130,7 @@ class _DeliveriesPageState extends ConsumerState<DeliveriesPage> {
                           DataColumn(label: Text('Orders')),
                           DataColumn(label: Text('Actions')),
                         ],
-                        rows: state.items.map((delivery) {
+                        rows: sortedItems.map((delivery) {
                           final customerCount = delivery.itemsByCustomer.length;
                           final orderCount = delivery.itemsByCustomer.fold<int>(
                             0,
