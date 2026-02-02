@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api_client.dart';
+import 'customer_sort.dart';
 import 'customers_repository.dart';
 import 'customers_state.dart';
 import 'models.dart';
@@ -20,15 +21,17 @@ class CustomersNotifier extends StateNotifier<CustomersState> {
   bool _hasCache = false;
   String _cacheKey = '';
   List<Customer> _cachedCustomers = [];
-  bool _useClientPaging = false;
+  bool _useClientPaging = true;
   final Map<int, Set<int>> _pageIdCache = {};
+  final Map<int, String> _nameSortKeyCache = {};
 
   void _invalidateCache() {
     _hasCache = false;
     _cacheKey = '';
     _cachedCustomers = [];
-    _useClientPaging = false;
+    _useClientPaging = true;
     _pageIdCache.clear();
+    _nameSortKeyCache.clear();
   }
 
   String _buildCacheKey() {
@@ -38,7 +41,8 @@ class CustomersNotifier extends StateNotifier<CustomersState> {
   Future<List<Customer>> _loadAllCustomers() async {
     final key = _buildCacheKey();
     if (_hasCache && _cacheKey == key) return _cachedCustomers;
-    final items = await _repository.fetchAllCustomers(ordering: 'id');
+    final items = await _repository.fetchAllCustomers(ordering: 'name');
+    items.sort(_compareCustomerByNameAsc);
     _cachedCustomers = items;
     _cacheKey = key;
     _hasCache = true;
@@ -107,12 +111,13 @@ class CustomersNotifier extends StateNotifier<CustomersState> {
         page: targetPage,
         pageSize: state.meta.pageSize,
         search: null,
-        ordering: 'id',
+        ordering: 'name',
       );
 
       if (requestId != _latestRequestId) return;
 
-      final pageIds = result.items.map((item) => item.id).toList();
+      final sortedItems = [...result.items]..sort(_compareCustomerByNameAsc);
+      final pageIds = sortedItems.map((item) => item.id).toList();
       final pageIdSet = pageIds.toSet();
       var overlapDetected = pageIdSet.length != pageIds.length;
       if (!overlapDetected) {
@@ -138,7 +143,7 @@ class CustomersNotifier extends StateNotifier<CustomersState> {
       _pageIdCache[targetPage] = pageIdSet;
       state = state.copyWith(
         isLoading: false,
-        items: result.items,
+        items: sortedItems,
         meta: PaginationMeta(
           page: targetPage,
           pageSize: result.meta.pageSize,
@@ -219,6 +224,7 @@ class CustomersNotifier extends StateNotifier<CustomersState> {
       }
       return true;
     }).toList();
+    filteredItems.sort(_compareCustomerByNameAsc);
     final total = filteredItems.length;
     final pageSize = state.meta.pageSize;
     final totalPages = (total / pageSize).ceil().clamp(1, 1000000);
@@ -303,6 +309,24 @@ class CustomersNotifier extends StateNotifier<CustomersState> {
       }
     }
     return patternIndex >= pattern.length;
+  }
+
+  int _compareCustomerByNameAsc(Customer a, Customer b) {
+    final aKey = _nameSortKeyCache.putIfAbsent(
+      a.id,
+      () => buildCustomerNameSortKey(a.name),
+    );
+    final bKey = _nameSortKeyCache.putIfAbsent(
+      b.id,
+      () => buildCustomerNameSortKey(b.name),
+    );
+    final keyCompare = aKey.compareTo(bKey);
+    if (keyCompare != 0) return keyCompare;
+    final displayCompare = formatCustomerDisplayName(
+      a.name,
+    ).toLowerCase().compareTo(formatCustomerDisplayName(b.name).toLowerCase());
+    if (displayCompare != 0) return displayCompare;
+    return a.id.compareTo(b.id);
   }
 
   Future<String?> saveCustomer(CustomerFormData data) async {

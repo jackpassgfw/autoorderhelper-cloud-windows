@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 
 import '../../core/api_client.dart';
 import '../auto_orders/models.dart' show NoteMedia;
+import '../customers/customer_sort.dart';
 import '../customers/customers_repository.dart';
 import '../customers/models.dart';
 import 'deliveries_repository.dart';
@@ -299,7 +300,9 @@ class _DeliveryFormPageState extends ConsumerState<DeliveryFormPage> {
             (customer) => customer.id == entry.selectedCustomerId,
           )
         : null;
-    final displayName = selectedCustomer?.name ?? entry.fallbackName;
+    final displayName = formatCustomerDisplayName(
+      selectedCustomer?.name ?? entry.fallbackName,
+    );
     final displayPhone = selectedCustomer?.phone ?? entry.fallbackPhone;
 
     return Card(
@@ -698,7 +701,9 @@ class _DeliveryFormPageState extends ConsumerState<DeliveryFormPage> {
       );
     }
     return byId.values.toList()
-      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      ..sort(
+        (a, b) => compareCustomerNamesAsc(a.name, b.name),
+      );
   }
 
   String _resolveCustomerName(
@@ -810,7 +815,8 @@ class _CustomerAutocompleteFieldState extends State<_CustomerAutocompleteField> 
   Widget build(BuildContext context) {
     final highlightColor = Theme.of(context).colorScheme.primary.withOpacity(0.2);
     return Autocomplete<Customer>(
-      displayStringForOption: (option) => '${option.name} (${option.phone})',
+      displayStringForOption: (option) =>
+          '${formatCustomerDisplayName(option.name)} (${option.phone})',
       optionsBuilder: (value) {
         final query = _debouncedQuery;
         if (query.trim().isEmpty) {
@@ -823,7 +829,8 @@ class _CustomerAutocompleteFieldState extends State<_CustomerAutocompleteField> 
         });
       },
       onSelected: (selection) {
-        widget.controller.text = '${selection.name} (${selection.phone})';
+        widget.controller.text =
+            '${formatCustomerDisplayName(selection.name)} (${selection.phone})';
         widget.onSelected(selection);
       },
       fieldViewBuilder: (context, textController, focusNode, onSubmit) {
@@ -862,7 +869,7 @@ class _CustomerAutocompleteFieldState extends State<_CustomerAutocompleteField> 
                   final option = options.elementAt(index);
                   return ListTile(
                     title: _buildHighlightedText(
-                      option.name,
+                      formatCustomerDisplayName(option.name),
                       _currentQuery,
                       Theme.of(context).textTheme.bodyLarge,
                       highlightColor,

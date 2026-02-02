@@ -10,6 +10,7 @@ import 'customer_form_dialog.dart';
 import 'customers_notifier.dart';
 import 'customers_repository.dart';
 import 'customers_state.dart';
+import 'customer_sort.dart';
 import 'models.dart';
 import 'customer_auto_orders_dialog.dart';
 
@@ -64,6 +65,8 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
 
     final centerMap = {for (final c in state.businessCenters) c.id: c.name};
     final countryMap = {for (final c in state.countries) c.id: c.name};
+    final sortedItems = [...state.items]
+      ..sort((a, b) => compareCustomerNamesAsc(a.name, b.name));
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -128,10 +131,11 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                   ? const Center(child: CircularProgressIndicator())
                   : state.items.isEmpty
                   ? const Center(child: Text('No customers found'))
-                  : SingleChildScrollView(
-                      padding: const EdgeInsets.all(8),
-                      child: DataTable(
-                        columnSpacing: 16,
+                  : SelectionArea(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(8),
+                        child: DataTable(
+                          columnSpacing: 16,
                         columns: const [
                           DataColumn(label: Text('Name')),
                           DataColumn(label: Text('Phone')),
@@ -142,7 +146,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                           DataColumn(label: Text('Sponsor')),
                           DataColumn(label: Text('Actions')),
                         ],
-                        rows: state.items.map((customer) {
+                        rows: sortedItems.map((customer) {
                           final centerAndSide = [
                             centerMap[customer.businessCenterId] ?? '-',
                             businessCenterSideLabel(
@@ -161,11 +165,14 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                             state.sponsorFilter,
                           );
 
+                          final displayName = formatCustomerDisplayName(
+                            customer.name,
+                          );
                           return DataRow(
                             cells: [
                               DataCell(
                                 _buildHighlightedText(
-                                  customer.name,
+                                  displayName,
                                   state.search,
                                   dataTextStyle,
                                   highlightColor,
@@ -267,6 +274,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                         }).toList(),
                       ),
                     ),
+                  ),
             ),
           ),
         ],
@@ -558,7 +566,9 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete customer'),
-        content: Text('Are you sure you want to delete ${customer.name}?'),
+        content: Text(
+          'Are you sure you want to delete ${formatCustomerDisplayName(customer.name)}?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -585,7 +595,13 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
       } else {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Deleted ${customer.name}')));
+        ).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Deleted ${formatCustomerDisplayName(customer.name)}',
+            ),
+          ),
+        );
       }
     }
   }

@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:dio/dio.dart';
 
 import '../../core/api_client.dart';
+import '../customers/customer_sort.dart';
 import '../customers/models.dart';
 import '../customers/customer_form_dialog.dart';
 import '../customers/customers_notifier.dart';
@@ -602,7 +603,7 @@ class _AutoOrderFormDialogState extends ConsumerState<AutoOrderFormDialog> {
   }
 
   String _customerLabel(Customer customer) {
-    return '${customer.name} (${customer.customerUsanaId ?? '-'})';
+    return '${formatCustomerDisplayName(customer.name)} (${customer.customerUsanaId ?? '-'})';
   }
 
   Future<void> _openCustomerForm(BuildContext context, Customer customer) async {

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api_client.dart';
 import '../auto_orders/models.dart' show NoteMedia;
+import 'customer_sort.dart';
 import 'models.dart';
 
 final customersRepositoryProvider = Provider<CustomersRepository>((ref) {
@@ -48,7 +49,6 @@ class CustomersRepository {
     String? ordering,
   }) async {
     var page = 1;
-    var totalPages = 1;
     final byId = <int, Customer>{};
     while (true) {
       final response = await fetchCustomers(
@@ -61,13 +61,11 @@ class CustomersRepository {
       for (final item in response.items) {
         byId[item.id] = item;
       }
-      final total = response.meta.total;
-      totalPages = (total / response.meta.pageSize).ceil().clamp(1, 1000000);
-      if (response.items.isEmpty || page >= totalPages) break;
+      if (response.items.isEmpty || response.items.length < pageSize) break;
       page += 1;
     }
-    final items = byId.values.toList()
-      ..sort((a, b) => a.id.compareTo(b.id));
+    final items = byId.values.toList();
+    items.sort((a, b) => compareCustomerNamesAsc(a.name, b.name));
     return items;
   }
 

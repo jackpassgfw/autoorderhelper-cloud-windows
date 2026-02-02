@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'customer_followups_notifier.dart';
+import 'customer_sort.dart';
 import 'models.dart';
 
 class CustomerFollowupsDialog extends ConsumerStatefulWidget {
@@ -73,7 +74,9 @@ class _CustomerFollowupsDialogState
     }
 
     return AlertDialog(
-      title: Text('Follow-ups ${widget.customer.name} (USANA ID: $usanaId)'),
+      title: Text(
+        'Follow-ups ${formatCustomerDisplayName(widget.customer.name)} (USANA ID: $usanaId)',
+      ),
       content: SizedBox(
         width: 520,
         height: 420,
