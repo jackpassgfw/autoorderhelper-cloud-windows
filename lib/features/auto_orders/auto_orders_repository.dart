@@ -137,13 +137,12 @@ class AutoOrdersRepository {
     final extended = List<DeductionOption>.from(options);
     final last = extended[extended.length - 1];
     final prev = extended[extended.length - 2];
-    final deltaDays = DateTime.utc(
-          last.date.year,
-          last.date.month,
-          last.date.day,
-        ).difference(
-          DateTime.utc(prev.date.year, prev.date.month, prev.date.day),
-        ).inDays;
+    final deltaDays =
+        DateTime.utc(last.date.year, last.date.month, last.date.day)
+            .difference(
+              DateTime.utc(prev.date.year, prev.date.month, prev.date.day),
+            )
+            .inDays;
     if (deltaDays == 0) return options;
 
     final cyclePairs = <MapEntry<int, CycleColor>>[];

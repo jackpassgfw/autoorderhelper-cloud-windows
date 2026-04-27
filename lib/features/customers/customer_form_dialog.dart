@@ -273,7 +273,7 @@ class _CustomerFormDialogState extends State<CustomerFormDialog> {
                     Expanded(
                       flex: 1,
                       child: DropdownButtonFormField<int?>(
-                        value: _data.countryId,
+                        initialValue: _data.countryId,
                         decoration: const InputDecoration(labelText: 'Country'),
                         items: [
                           const DropdownMenuItem<int?>(
@@ -343,10 +343,13 @@ class _CustomerFormDialogState extends State<CustomerFormDialog> {
                                   child: Image.network(
                                     media.url,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) =>
-                                        const Center(
-                                      child: Icon(Icons.broken_image_outlined),
-                                    ),
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            const Center(
+                                              child: Icon(
+                                                Icons.broken_image_outlined,
+                                              ),
+                                            ),
                                   ),
                                 ),
                               ),
@@ -389,7 +392,9 @@ class _CustomerFormDialogState extends State<CustomerFormDialog> {
                     Expanded(
                       child: TextFormField(
                         controller: _usanaIdController,
-                        decoration: const InputDecoration(labelText: 'USANA ID'),
+                        decoration: const InputDecoration(
+                          labelText: 'USANA ID',
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -485,9 +490,8 @@ class _CustomerFormDialogState extends State<CustomerFormDialog> {
   }
 
   void _showSnack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
-
 }

@@ -52,7 +52,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       await _tokenStore.writeAccessToken(session.accessToken);
 
-      state = state.copyWith(token: session.accessToken, isLoading: false);
+      state = state.copyWith(
+        token: session.accessToken,
+        userId: session.userId,
+        isLoading: false,
+      );
     } on DioException catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -70,6 +74,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     await _tokenStore.clear();
     state = state.copyWith(
       token: null,
+      userId: null,
       errorMessage: 'Session expired. Please log in again.',
     );
   }

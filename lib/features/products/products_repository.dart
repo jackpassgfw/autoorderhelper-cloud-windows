@@ -40,7 +40,11 @@ class ProductsRepository {
         items: data
             .map((item) => Product.fromJson(item as Map<String, dynamic>))
             .toList(),
-        meta: PaginationMeta(page: page, pageSize: pageSize, total: data.length),
+        meta: PaginationMeta(
+          page: page,
+          pageSize: pageSize,
+          total: data.length,
+        ),
       );
     }
     return ProductListResponse(
@@ -64,9 +68,10 @@ class ProductsRepository {
       );
       allItems.addAll(response.items);
       total = response.meta.total;
-      final totalPages = (total / response.meta.pageSize)
-          .ceil()
-          .clamp(1, 1000000);
+      final totalPages = (total / response.meta.pageSize).ceil().clamp(
+        1,
+        1000000,
+      );
       if (response.items.isEmpty || page >= totalPages) {
         return ProductListResponse(
           items: allItems,
@@ -90,9 +95,7 @@ class ProductsRepository {
   }
 
   Future<Product> fetchProduct(int id) async {
-    final response = await _client.get<Map<String, dynamic>>(
-      '/products/$id',
-    );
+    final response = await _client.get<Map<String, dynamic>>('/products/$id');
     return Product.fromJson(response.data ?? const {});
   }
 

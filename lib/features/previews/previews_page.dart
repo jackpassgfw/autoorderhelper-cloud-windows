@@ -106,9 +106,9 @@ class _PreviewsPageState extends ConsumerState<PreviewsPage> {
       if (result != null) {
         await ref.read(previewsNotifierProvider.notifier).loadNextWeek();
         if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Auto order saved')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Auto order saved')));
       }
     } on DioException catch (error) {
       if (!context.mounted) return;
@@ -129,7 +129,10 @@ class _PreviewsPageState extends ConsumerState<PreviewsPage> {
     }
   }
 
-  List<Customer> _ensureCustomerIncluded(List<Customer> customers, AutoOrder order) {
+  List<Customer> _ensureCustomerIncluded(
+    List<Customer> customers,
+    AutoOrder order,
+  ) {
     final exists = customers.any((c) => c.id == order.customerId);
     if (exists) return customers;
     return [
@@ -214,8 +217,9 @@ class _PreviewList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeOccurrences =
-        occurrences.where((occ) => occ.status == ScheduleStatus.active).toList();
+    final activeOccurrences = occurrences
+        .where((occ) => occ.status == ScheduleStatus.active)
+        .toList();
     final grouped = _groupByDate(activeOccurrences);
 
     if (isLoading) {
@@ -257,10 +261,7 @@ class _PreviewList extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  day,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
+                Text(day, style: Theme.of(context).textTheme.titleMedium),
                 Text(
                   '${items.length} schedules',
                   style: Theme.of(context).textTheme.bodySmall,

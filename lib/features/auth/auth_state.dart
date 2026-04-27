@@ -13,15 +13,17 @@ class AuthState {
 
   bool get isAuthenticated => token != null && token!.isNotEmpty;
 
+  static const _unset = Object();
+
   AuthState copyWith({
-    String? token,
-    int? userId,
+    Object? token = _unset,
+    Object? userId = _unset,
     bool? isLoading,
     String? errorMessage,
   }) {
     return AuthState(
-      token: token ?? this.token,
-      userId: userId ?? this.userId,
+      token: token == _unset ? this.token : token as String?,
+      userId: userId == _unset ? this.userId : userId as int?,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
     );

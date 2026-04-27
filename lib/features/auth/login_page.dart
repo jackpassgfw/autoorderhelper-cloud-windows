@@ -118,10 +118,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       const SizedBox(height: 8),
                       Text(
                         'Flutter Desktop Client (${env.label})',
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelLarge
-                            ?.copyWith(color: Colors.grey[700]),
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: Colors.grey[700],
+                        ),
                       ),
                       const SizedBox(height: 24),
                       TextFormField(

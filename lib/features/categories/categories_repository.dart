@@ -17,10 +17,7 @@ class CategoriesRepository {
   Future<List<Category>> fetchAll({int page = 1, int pageSize = 200}) async {
     final response = await _client.get<dynamic>(
       '/categories/',
-      queryParameters: {
-        'page': page,
-        'page_size': pageSize,
-      },
+      queryParameters: {'page': page, 'page_size': pageSize},
     );
     final data = response.data;
     if (data is Map<String, dynamic>) {

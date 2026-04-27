@@ -10,7 +10,6 @@ import 'auto_orders_notifier.dart';
 import 'auto_orders_repository.dart';
 import 'auto_orders_state.dart';
 import 'models.dart';
-import 'schedule_note_editor_page.dart';
 import '../../core/api_client.dart';
 
 class AutoOrdersPage extends ConsumerStatefulWidget {
@@ -51,22 +50,20 @@ class _AutoOrdersPageState extends ConsumerState<AutoOrdersPage> {
     final formatter = DateFormat('yyyy-MM-dd');
 
     var items = state.items;
-    items =
-        items.where((i) => i.status == ScheduleStatus.active).toList();
+    items = items.where((i) => i.status == ScheduleStatus.active).toList();
     final searchQuery = _searchQuery.trim().toLowerCase();
     if (searchQuery.isNotEmpty) {
       items = items.where((i) => _fuzzyMatchAutoOrder(i, searchQuery)).toList();
     }
     if (state.cycleFilter != null) {
       final cycleFilter = state.cycleFilter!;
-      items =
-          items
-              .where(
-                (i) =>
-                    i.cycleValue == cycleFilter.value &&
-                    i.cycleColor == cycleFilter.color,
-              )
-              .toList();
+      items = items
+          .where(
+            (i) =>
+                i.cycleValue == cycleFilter.value &&
+                i.cycleColor == cycleFilter.color,
+          )
+          .toList();
     }
     if (state.dateRangeFilter != null) {
       final range = state.dateRangeFilter!;
@@ -424,7 +421,9 @@ class _AutoOrdersPageState extends ConsumerState<AutoOrdersPage> {
       isMatch = currentMatch;
     }
 
-    return RichText(text: TextSpan(text: '', style: baseStyle, children: spans));
+    return RichText(
+      text: TextSpan(text: '', style: baseStyle, children: spans),
+    );
   }
 
   Future<void> _openForm(
@@ -459,8 +458,8 @@ class _AutoOrdersPageState extends ConsumerState<AutoOrdersPage> {
         return;
       }
     } else {
-      initialData = state.customers.isNotEmpty &&
-              state.deductionOptions.isNotEmpty
+      initialData =
+          state.customers.isNotEmpty && state.deductionOptions.isNotEmpty
           ? AutoOrderFormData(
               customerId: state.customers.first.id,
               customerName: state.customers.first.name,
@@ -481,6 +480,7 @@ class _AutoOrdersPageState extends ConsumerState<AutoOrdersPage> {
             );
     }
 
+    if (!context.mounted) return;
     final result = await showDialog<String?>(
       context: context,
       builder: (_) => AutoOrderFormDialog(
@@ -499,47 +499,6 @@ class _AutoOrdersPageState extends ConsumerState<AutoOrdersPage> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(result)));
-    }
-  }
-
-  Future<void> _openNoteEditor(
-    BuildContext context,
-    AutoOrdersRepository repository,
-    AutoOrdersNotifier notifier,
-    AutoOrdersState state,
-    AutoOrder order,
-  ) async {
-    try {
-      final fresh = await repository.fetchAutoOrder(order.id);
-      if (!context.mounted) return;
-      final result = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(
-          builder: (_) => ScheduleNoteEditorPage(
-            scheduleId: fresh.id,
-            initialNote: fresh.note,
-            initialNoteMedia: fresh.noteMedia,
-          ),
-        ),
-      );
-      if (result == true && context.mounted) {
-        await notifier.loadAutoOrders(page: state.meta.page);
-      }
-    } on DioException catch (error) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(normalizeErrorMessage(error)),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-    } catch (_) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Failed to open schedule note'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
     }
   }
 

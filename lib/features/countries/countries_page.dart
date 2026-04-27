@@ -16,9 +16,7 @@ class _CountriesPageState extends ConsumerState<CountriesPage> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(
-      () => ref.read(countriesNotifierProvider.notifier).load(),
-    );
+    Future.microtask(() => ref.read(countriesNotifierProvider.notifier).load());
   }
 
   @override
@@ -141,9 +139,9 @@ class _CountriesPageState extends ConsumerState<CountriesPage> {
       ),
     );
     if (result != null && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result)));
     }
   }
 
@@ -177,9 +175,9 @@ class _CountriesPageState extends ConsumerState<CountriesPage> {
           ),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Deleted ${country.name}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Deleted ${country.name}')));
       }
     }
   }

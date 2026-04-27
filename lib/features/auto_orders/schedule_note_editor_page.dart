@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -162,12 +161,13 @@ class _ScheduleNoteEditorPageState
                                       child: Image.network(
                                         media.url,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) =>
-                                            const Center(
-                                          child: Icon(
-                                            Icons.broken_image_outlined,
-                                          ),
-                                        ),
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                const Center(
+                                                  child: Icon(
+                                                    Icons.broken_image_outlined,
+                                                  ),
+                                                ),
                                       ),
                                     ),
                                   ),
@@ -250,9 +250,7 @@ class _ScheduleNoteEditorPageState
       final tempDir = await getTemporaryDirectory();
       final fileName =
           'clipboard_${DateTime.now().millisecondsSinceEpoch}.${clipboardImage.extension}';
-      final file = File(
-        '${tempDir.path}${Platform.pathSeparator}$fileName',
-      );
+      final file = File('${tempDir.path}${Platform.pathSeparator}$fileName');
       await file.writeAsBytes(clipboardImage.bytes, flush: true);
       final repository = ref.read(autoOrdersRepositoryProvider);
       final uploaded = await repository.uploadNoteMedia(file);
@@ -284,8 +282,7 @@ class _ScheduleNoteEditorPageState
       );
       return;
     }
-    final updated =
-        existing.replaceRange(selection.start, selection.end, text);
+    final updated = existing.replaceRange(selection.start, selection.end, text);
     final offset = selection.start + text.length;
     _noteController.value = TextEditingValue(
       text: updated,
@@ -346,9 +343,9 @@ class _ScheduleNoteEditorPageState
         noteMedia: _attachments,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Schedule note saved')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Schedule note saved')));
       Navigator.of(context).maybePop(true);
     } on DioException catch (error) {
       _showError(normalizeErrorMessage(error));

@@ -18,7 +18,9 @@ class _DeliveriesPageState extends ConsumerState<DeliveriesPage> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref.read(deliveriesNotifierProvider.notifier).load());
+    Future.microtask(
+      () => ref.read(deliveriesNotifierProvider.notifier).load(),
+    );
   }
 
   @override
@@ -56,8 +58,9 @@ class _DeliveriesPageState extends ConsumerState<DeliveriesPage> {
                   const SizedBox(width: 12),
                   Chip(
                     label: Text('${state.items.length} items'),
-                    backgroundColor:
-                        Theme.of(context).colorScheme.surfaceVariant,
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
                     side: BorderSide(
                       color: Theme.of(context).colorScheme.outlineVariant,
                     ),
@@ -140,22 +143,28 @@ class _DeliveriesPageState extends ConsumerState<DeliveriesPage> {
                           return DataRow(
                             cells: [
                               DataCell(
-                                Text(_formatDate(delivery.pickupDate, dateFormatter)),
+                                Text(
+                                  _formatDate(
+                                    delivery.pickupDate,
+                                    dateFormatter,
+                                  ),
+                                ),
                               ),
                               DataCell(
-                                Text(delivery.pickupPeople.isEmpty
-                                    ? '-'
-                                    : delivery.pickupPeople),
+                                Text(
+                                  delivery.pickupPeople.isEmpty
+                                      ? '-'
+                                      : delivery.pickupPeople,
+                                ),
                               ),
                               DataCell(
-                                _buildDeliveredChip(context, delivery.delivered),
+                                _buildDeliveredChip(
+                                  context,
+                                  delivery.delivered,
+                                ),
                               ),
-                              DataCell(
-                                Text(customerCount.toString()),
-                              ),
-                              DataCell(
-                                Text(orderCount.toString()),
-                              ),
+                              DataCell(Text(customerCount.toString())),
+                              DataCell(Text(orderCount.toString())),
                               DataCell(
                                 SizedBox(
                                   width: 140,
@@ -169,11 +178,11 @@ class _DeliveriesPageState extends ConsumerState<DeliveriesPage> {
                                         onPressed: state.isSubmitting
                                             ? null
                                             : () => _openEditDialog(
-                                                  context,
-                                                  notifier,
-                                                  state,
-                                                  delivery,
-                                                ),
+                                                context,
+                                                notifier,
+                                                state,
+                                                delivery,
+                                              ),
                                       ),
                                       IconButton(
                                         tooltip: 'Delete',
@@ -181,10 +190,10 @@ class _DeliveriesPageState extends ConsumerState<DeliveriesPage> {
                                         onPressed: state.isSubmitting
                                             ? null
                                             : () => _confirmDelete(
-                                                  context,
-                                                  notifier,
-                                                  delivery,
-                                                ),
+                                                context,
+                                                notifier,
+                                                delivery,
+                                              ),
                                       ),
                                     ],
                                   ),
@@ -207,29 +216,12 @@ class _DeliveriesPageState extends ConsumerState<DeliveriesPage> {
     return formatter.format(value);
   }
 
-  String _summarizeNames(List<String> values, {int maxItems = 3}) {
-    if (values.isEmpty) return '';
-    final trimmed = values.map((value) => value.trim()).where((v) => v.isNotEmpty);
-    final unique = <String>[];
-    for (final value in trimmed) {
-      if (!unique.contains(value)) {
-        unique.add(value);
-      }
-    }
-    if (unique.isEmpty) return '';
-    if (unique.length <= maxItems) {
-      return unique.join(', ');
-    }
-    final sample = unique.take(maxItems).join(', ');
-    return '$sample +${unique.length - maxItems}';
-  }
-
   Widget _buildDeliveredChip(BuildContext context, bool delivered) {
     final colorScheme = Theme.of(context).colorScheme;
     final label = delivered ? 'Yes' : 'No';
     final background = delivered
-        ? colorScheme.primary.withOpacity(0.12)
-        : colorScheme.surfaceVariant;
+        ? colorScheme.primary.withValues(alpha: 0.12)
+        : colorScheme.surfaceContainerHighest;
     final foreground = delivered ? colorScheme.primary : colorScheme.onSurface;
 
     return Chip(
@@ -268,7 +260,6 @@ class _DeliveriesPageState extends ConsumerState<DeliveriesPage> {
       ],
     );
   }
-
 
   Future<void> _openEditDialog(
     BuildContext context,
@@ -312,9 +303,9 @@ class _DeliveriesPageState extends ConsumerState<DeliveriesPage> {
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Delivery deleted')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Delivery deleted')));
     }
   }
 
@@ -346,7 +337,9 @@ class _DeliveriesPageState extends ConsumerState<DeliveriesPage> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result.id == null ? 'Delivery created' : 'Delivery updated'),
+          content: Text(
+            result.id == null ? 'Delivery created' : 'Delivery updated',
+          ),
         ),
       );
     }

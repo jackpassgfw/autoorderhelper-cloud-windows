@@ -13,11 +13,9 @@ class CartState {
   final List<SavedCart> savedCarts;
   final bool applyItemDiscount;
 
-  int get itemCount =>
-      items.fold(0, (total, item) => total + item.quantity);
+  int get itemCount => items.fold(0, (total, item) => total + item.quantity);
 
-  double get subtotal =>
-      items.fold(0, (total, item) => total + item.lineTotal);
+  double get subtotal => items.fold(0, (total, item) => total + item.lineTotal);
 
   double get itemDiscountTotal => applyItemDiscount
       ? items.fold(0, (total, item) => total + item.discountAmount)

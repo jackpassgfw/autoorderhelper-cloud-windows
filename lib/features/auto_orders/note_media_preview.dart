@@ -73,9 +73,9 @@ class _AudioPreviewDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(media.originalName.isEmpty
-          ? 'Audio attachment'
-          : media.originalName),
+      title: Text(
+        media.originalName.isEmpty ? 'Audio attachment' : media.originalName,
+      ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -105,9 +105,9 @@ class _AudioPreviewDialog extends StatelessWidget {
     if (uri == null) return;
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to open audio')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to open audio')));
     }
   }
 }
@@ -119,8 +119,9 @@ class _VideoPreviewDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title =
-        media.originalName.isEmpty ? 'Video attachment' : media.originalName;
+    final title = media.originalName.isEmpty
+        ? 'Video attachment'
+        : media.originalName;
     return AlertDialog(
       title: Text(title),
       content: Column(
@@ -152,9 +153,9 @@ class _VideoPreviewDialog extends StatelessWidget {
     if (uri == null) return;
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to open video')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to open video')));
     }
   }
 }

@@ -30,13 +30,16 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
     };
     final grouped = _buildGroups(state.items, categoryNames);
     final colorScheme = Theme.of(context).colorScheme;
-    final headingStyle = Theme.of(context)
-        .textTheme
-        .labelLarge
-        ?.copyWith(fontWeight: FontWeight.w600);
+    final headingStyle = Theme.of(
+      context,
+    ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600);
     final dataTextStyle = Theme.of(context).textTheme.bodyMedium;
-    final headingRowColor = colorScheme.surfaceVariant.withOpacity(0.6);
-    final oddRowColor = colorScheme.surfaceVariant.withOpacity(0.25);
+    final headingRowColor = colorScheme.surfaceContainerHighest.withValues(
+      alpha: 0.6,
+    );
+    final oddRowColor = colorScheme.surfaceContainerHighest.withValues(
+      alpha: 0.25,
+    );
 
     return SelectableRegion(
       focusNode: FocusNode(),
@@ -53,15 +56,13 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
                   children: [
                     Text(
                       'Categories',
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineLarge
+                      style: Theme.of(context).textTheme.headlineLarge
                           ?.copyWith(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(width: 12),
                     Chip(
                       label: Text('${state.items.length} items'),
-                      backgroundColor: colorScheme.surfaceVariant,
+                      backgroundColor: colorScheme.surfaceContainerHighest,
                       side: BorderSide(color: colorScheme.outlineVariant),
                     ),
                   ],
@@ -114,252 +115,241 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
                 child: state.isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : state.items.isEmpty
-                        ? const Center(child: Text('No categories'))
-                        : ListView(
-                            padding: const EdgeInsets.all(8),
-                            children: [
-                              for (final group in grouped)
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 6,
-                                        ),
-                                        child: Text(
-                                          '${group.title} (${group.items.length})',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .titleMedium,
-                                        ),
-                                      ),
-                                      SingleChildScrollView(
-                                        scrollDirection: Axis.horizontal,
-                                        padding: const EdgeInsets.only(
-                                          left: 8,
-                                          right: 8,
-                                          bottom: 8,
-                                        ),
-                                        child: LayoutBuilder(
-                                          builder: (context, constraints) {
-                                            final columnSpacing = 20.0;
-                                            final horizontalMargin = 12.0;
-                                            const nameWidth = 120.0;
-                                            const parentWidth = 120.0;
-                                            const sortWidth = 40.0;
-                                            const activeWidth = 40.0;
-                                            const actionsWidth = 140.0;
-                                            final tableWidth =
-                                                horizontalMargin * 2 +
-                                                    nameWidth +
-                                                    parentWidth +
-                                                    sortWidth +
-                                                    activeWidth +
-                                                    actionsWidth +
-                                                    columnSpacing * 4;
-                                            return ConstrainedBox(
-                                              constraints: BoxConstraints(
-                                                minWidth: tableWidth,
-                                              ),
-                                              child: DataTable(
-                                                headingRowColor:
-                                                    MaterialStatePropertyAll(
+                    ? const Center(child: Text('No categories'))
+                    : ListView(
+                        padding: const EdgeInsets.all(8),
+                        children: [
+                          for (final group in grouped)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 6,
+                                    ),
+                                    child: Text(
+                                      '${group.title} (${group.items.length})',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.titleMedium,
+                                    ),
+                                  ),
+                                  SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    padding: const EdgeInsets.only(
+                                      left: 8,
+                                      right: 8,
+                                      bottom: 8,
+                                    ),
+                                    child: LayoutBuilder(
+                                      builder: (context, constraints) {
+                                        final columnSpacing = 20.0;
+                                        final horizontalMargin = 12.0;
+                                        const nameWidth = 120.0;
+                                        const parentWidth = 120.0;
+                                        const sortWidth = 40.0;
+                                        const activeWidth = 40.0;
+                                        const actionsWidth = 140.0;
+                                        final tableWidth =
+                                            horizontalMargin * 2 +
+                                            nameWidth +
+                                            parentWidth +
+                                            sortWidth +
+                                            activeWidth +
+                                            actionsWidth +
+                                            columnSpacing * 4;
+                                        return ConstrainedBox(
+                                          constraints: BoxConstraints(
+                                            minWidth: tableWidth,
+                                          ),
+                                          child: DataTable(
+                                            headingRowColor:
+                                                WidgetStatePropertyAll(
                                                   headingRowColor,
                                                 ),
-                                                headingTextStyle: headingStyle,
-                                                dataTextStyle: dataTextStyle,
-                                                columnSpacing: columnSpacing,
-                                                horizontalMargin:
-                                                    horizontalMargin,
-                                                headingRowHeight: 44,
-                                                dataRowMinHeight: 44,
-                                                dataRowMaxHeight: 56,
-                                                dividerThickness: 0,
-                                                columns: const [
-                                                  DataColumn(
-                                                    label: SizedBox(
-                                                      width: nameWidth,
-                                                      child: Text('Name'),
-                                                    ),
+                                            headingTextStyle: headingStyle,
+                                            dataTextStyle: dataTextStyle,
+                                            columnSpacing: columnSpacing,
+                                            horizontalMargin: horizontalMargin,
+                                            headingRowHeight: 44,
+                                            dataRowMinHeight: 44,
+                                            dataRowMaxHeight: 56,
+                                            dividerThickness: 0,
+                                            columns: const [
+                                              DataColumn(
+                                                label: SizedBox(
+                                                  width: nameWidth,
+                                                  child: Text('Name'),
+                                                ),
+                                              ),
+                                              DataColumn(
+                                                label: SizedBox(
+                                                  width: parentWidth,
+                                                  child: Text('Parent'),
+                                                ),
+                                              ),
+                                              DataColumn(
+                                                label: SizedBox(
+                                                  width: sortWidth,
+                                                  child: Text('Sort'),
+                                                ),
+                                              ),
+                                              DataColumn(
+                                                label: SizedBox(
+                                                  width: activeWidth,
+                                                  child: Center(
+                                                    child: Text('Active'),
                                                   ),
-                                                  DataColumn(
-                                                    label: SizedBox(
-                                                      width: parentWidth,
-                                                      child: Text('Parent'),
-                                                    ),
-                                                  ),
-                                                  DataColumn(
-                                                    label: SizedBox(
-                                                      width: sortWidth,
-                                                      child: Text('Sort'),
-                                                    ),
-                                                  ),
-                                                  DataColumn(
-                                                    label: SizedBox(
-                                                      width: activeWidth,
-                                                      child: Center(
-                                                        child: Text('Active'),
+                                                ),
+                                              ),
+                                              DataColumn(
+                                                label: SizedBox(
+                                                  width: actionsWidth,
+                                                  child: Text('Actions'),
+                                                ),
+                                              ),
+                                            ],
+                                            rows: group.items
+                                                .asMap()
+                                                .entries
+                                                .map(
+                                                  (entry) => DataRow.byIndex(
+                                                    index: entry.key,
+                                                    color:
+                                                        WidgetStatePropertyAll(
+                                                          entry.key.isEven
+                                                              ? Colors
+                                                                    .transparent
+                                                              : oddRowColor,
+                                                        ),
+                                                    cells: [
+                                                      DataCell(
+                                                        SizedBox(
+                                                          width: nameWidth,
+                                                          child: Text(
+                                                            entry.value.name,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                          ),
+                                                        ),
                                                       ),
-                                                    ),
-                                                  ),
-                                                  DataColumn(
-                                                    label: SizedBox(
-                                                      width: actionsWidth,
-                                                      child: Text('Actions'),
-                                                    ),
-                                                  ),
-                                                ],
-                                                rows:
-                                                    group.items
-                                                        .asMap()
-                                                        .entries
-                                                        .map(
-                                                          (entry) =>
-                                                              DataRow.byIndex(
-                                                            index: entry.key,
-                                                            color:
-                                                                MaterialStatePropertyAll(
-                                                              entry.key.isEven
-                                                                  ? Colors
-                                                                      .transparent
-                                                                  : oddRowColor,
+                                                      DataCell(
+                                                        SizedBox(
+                                                          width: parentWidth,
+                                                          child: Text(
+                                                            entry.value.parentId ==
+                                                                    null
+                                                                ? '-'
+                                                                : categoryNames[entry
+                                                                          .value
+                                                                          .parentId] ??
+                                                                      'Category ${entry.value.parentId}',
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      DataCell(
+                                                        SizedBox(
+                                                          width: sortWidth,
+                                                          child: Text(
+                                                            entry
+                                                                .value
+                                                                .sortOrder
+                                                                .toString(),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      DataCell(
+                                                        SizedBox(
+                                                          width: activeWidth,
+                                                          child: Center(
+                                                            child: Icon(
+                                                              entry
+                                                                      .value
+                                                                      .isActive
+                                                                  ? Icons
+                                                                        .check_circle_outline
+                                                                  : Icons
+                                                                        .cancel_outlined,
+                                                              color:
+                                                                  entry
+                                                                      .value
+                                                                      .isActive
+                                                                  ? Theme.of(
+                                                                          context,
+                                                                        )
+                                                                        .colorScheme
+                                                                        .primary
+                                                                  : Theme.of(
+                                                                          context,
+                                                                        )
+                                                                        .colorScheme
+                                                                        .error,
                                                             ),
-                                                            cells: [
-                                                              DataCell(
-                                                                SizedBox(
-                                                                  width:
-                                                                      nameWidth,
-                                                                  child: Text(
-                                                                    entry
-                                                                        .value
-                                                                        .name,
-                                                                    overflow:
-                                                                        TextOverflow
-                                                                            .ellipsis,
-                                                                  ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      DataCell(
+                                                        SizedBox(
+                                                          width: actionsWidth,
+                                                          child: Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceEvenly,
+                                                            children: [
+                                                              IconButton(
+                                                                tooltip: 'Edit',
+                                                                icon: const Icon(
+                                                                  Icons
+                                                                      .edit_outlined,
                                                                 ),
-                                                              ),
-                                                              DataCell(
-                                                                SizedBox(
-                                                                  width:
-                                                                      parentWidth,
-                                                                  child: Text(
-                                                                    entry.value
-                                                                                .parentId ==
-                                                                            null
-                                                                        ? '-'
-                                                                        : categoryNames[
-                                                                                entry.value.parentId] ??
-                                                                            'Category ${entry.value.parentId}',
-                                                                    overflow:
-                                                                        TextOverflow
-                                                                            .ellipsis,
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                              DataCell(
-                                                                SizedBox(
-                                                                  width:
-                                                                      sortWidth,
-                                                                  child: Text(
-                                                                    entry.value
-                                                                        .sortOrder
-                                                                        .toString(),
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                              DataCell(
-                                                                SizedBox(
-                                                                  width:
-                                                                      activeWidth,
-                                                                  child: Center(
-                                                                    child: Icon(
-                                                                      entry.value
-                                                                              .isActive
-                                                                          ? Icons
-                                                                              .check_circle_outline
-                                                                          : Icons
-                                                                              .cancel_outlined,
-                                                                      color: entry
-                                                                              .value
-                                                                              .isActive
-                                                                          ? Theme.of(
-                                                                              context,
-                                                                            )
-                                                                              .colorScheme
-                                                                              .primary
-                                                                          : Theme.of(
-                                                                              context,
-                                                                            )
-                                                                              .colorScheme
-                                                                              .error,
+                                                                onPressed: () =>
+                                                                    _openForm(
+                                                                      context,
+                                                                      entry
+                                                                          .value,
                                                                     ),
-                                                                  ),
-                                                                ),
                                                               ),
-                                                              DataCell(
-                                                                SizedBox(
-                                                                  width:
-                                                                      actionsWidth,
-                                                                  child: Row(
-                                                                    mainAxisAlignment:
-                                                                        MainAxisAlignment
-                                                                            .spaceEvenly,
-                                                                    children: [
-                                                                      IconButton(
-                                                                        tooltip:
-                                                                            'Edit',
-                                                                        icon:
-                                                                            const Icon(
-                                                                          Icons
-                                                                              .edit_outlined,
-                                                                        ),
-                                                                        onPressed:
-                                                                            () => _openForm(
-                                                                          context,
-                                                                          entry
-                                                                              .value,
-                                                                        ),
-                                                                      ),
-                                                                      IconButton(
-                                                                        tooltip:
-                                                                            'Delete',
-                                                                        icon:
-                                                                            const Icon(
-                                                                          Icons
-                                                                              .delete_outline,
-                                                                        ),
-                                                                        onPressed:
-                                                                            () => _confirmDelete(
-                                                                          context,
-                                                                          entry
-                                                                              .value,
-                                                                        ),
-                                                                      ),
-                                                                    ],
-                                                                  ),
+                                                              IconButton(
+                                                                tooltip:
+                                                                    'Delete',
+                                                                icon: const Icon(
+                                                                  Icons
+                                                                      .delete_outline,
                                                                 ),
+                                                                onPressed: () =>
+                                                                    _confirmDelete(
+                                                                      context,
+                                                                      entry
+                                                                          .value,
+                                                                    ),
                                                               ),
                                                             ],
                                                           ),
-                                                        )
-                                                        .toList(),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                )
+                                                .toList(),
+                                          ),
+                                        );
+                                      },
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        ),
+                        ],
+                      ),
+              ),
+            ),
           ],
         ),
       ),
@@ -391,8 +381,9 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
       ),
     );
     if (result != null && context.mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(result)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result)));
     }
   }
 
@@ -426,8 +417,9 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
           ),
         );
       } else {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Deleted ${category.name}')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Deleted ${category.name}')));
       }
     }
   }
@@ -440,8 +432,7 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
     for (final category in categories) {
       final parentTitle = category.parentId == null
           ? 'Top category'
-          : categoryNames[category.parentId] ??
-              'Category ${category.parentId}';
+          : categoryNames[category.parentId] ?? 'Category ${category.parentId}';
       grouped.putIfAbsent(parentTitle, () => []).add(category);
     }
 
@@ -455,13 +446,7 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
 
     final keys = grouped.keys.toList();
     keys.sort((a, b) {
-      const preferredOrder = [
-        'Top category',
-        '营养补充品',
-        '皮肤护理',
-        '畅活营养',
-        '套装',
-      ];
+      const preferredOrder = ['Top category', '营养补充品', '皮肤护理', '畅活营养', '套装'];
       final aIndex = preferredOrder.indexOf(a);
       final bIndex = preferredOrder.indexOf(b);
       if (aIndex != -1 || bIndex != -1) {
@@ -472,9 +457,7 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
       return a.compareTo(b);
     });
 
-    return [
-      for (final key in keys) _CategoryGroup(key, grouped[key]!),
-    ];
+    return [for (final key in keys) _CategoryGroup(key, grouped[key]!)];
   }
 }
 

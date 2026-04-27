@@ -180,8 +180,8 @@ class _AutoOrderFormDialogState extends ConsumerState<AutoOrderFormDialog> {
                             data: DropdownMenuThemeData(
                               inputDecorationTheme: InputDecorationTheme(
                                 filled: true,
-                                fillColor:
-                                    colorScheme.surfaceVariant.withOpacity(0.4),
+                                fillColor: colorScheme.surfaceContainerHighest
+                                    .withValues(alpha: 0.4),
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 12,
                                   vertical: 12,
@@ -203,11 +203,11 @@ class _AutoOrderFormDialogState extends ConsumerState<AutoOrderFormDialog> {
                               menuHeight: 320,
                               width: 520,
                               menuStyle: MenuStyle(
-                                elevation: const MaterialStatePropertyAll(6),
-                                backgroundColor: MaterialStatePropertyAll(
+                                elevation: const WidgetStatePropertyAll(6),
+                                backgroundColor: WidgetStatePropertyAll(
                                   colorScheme.surface,
                                 ),
-                                shape: MaterialStatePropertyAll(
+                                shape: WidgetStatePropertyAll(
                                   RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -270,10 +270,8 @@ class _AutoOrderFormDialogState extends ConsumerState<AutoOrderFormDialog> {
                       OutlinedButton.icon(
                         onPressed: selectedCustomer == null
                             ? null
-                            : () => _openCustomerForm(
-                                  context,
-                                  selectedCustomer!,
-                                ),
+                            : () =>
+                                  _openCustomerForm(context, selectedCustomer!),
                         icon: const Icon(Icons.open_in_new),
                         label: const Text('Show customer'),
                       ),
@@ -281,228 +279,236 @@ class _AutoOrderFormDialogState extends ConsumerState<AutoOrderFormDialog> {
                   ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<DeductionOption>(
-                initialValue: selectedOption,
-                decoration: const InputDecoration(labelText: 'Deduction date'),
-                items: widget.deductionOptions
-                    .map(
-                      (o) => DropdownMenuItem<DeductionOption>(
-                        value: o,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _CycleDot(color: _colorForCycle(o.cycleColor)),
-                            const SizedBox(width: 6),
-                            Text(o.label()),
-                          ],
-                        ),
-                      ),
-                    )
-                    .toList(),
-                selectedItemBuilder: (context) {
-                  return widget.deductionOptions
+                  initialValue: selectedOption,
+                  decoration: const InputDecoration(
+                    labelText: 'Deduction date',
+                  ),
+                  items: widget.deductionOptions
                       .map(
-                        (o) => Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _CycleDot(color: _colorForCycle(o.cycleColor)),
-                            const SizedBox(width: 6),
-                            Text(o.label()),
-                          ],
+                        (o) => DropdownMenuItem<DeductionOption>(
+                          value: o,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _CycleDot(color: _colorForCycle(o.cycleColor)),
+                              const SizedBox(width: 6),
+                              Text(o.label()),
+                            ],
+                          ),
                         ),
                       )
-                      .toList();
-                },
-                onChanged: (value) => setState(() {
-                  selectedOption = value;
-                }),
-                validator: (value) =>
-                    value == null ? 'Select a deduction date' : null,
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<ScheduleStatus>(
-                initialValue: _data.status,
-                decoration: const InputDecoration(labelText: 'Status'),
-                items: statuses
-                    .map(
-                      (s) => DropdownMenuItem<ScheduleStatus>(
-                        value: s,
-                        child: Text(scheduleStatusLabel(s)),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) setState(() => _data.status = value);
-                },
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _noteController,
-                decoration: const InputDecoration(labelText: 'Note'),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Text(
-                    'Attachments',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(width: 8),
-                  if (_isUploading)
-                    const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      .toList(),
+                  selectedItemBuilder: (context) {
+                    return widget.deductionOptions
+                        .map(
+                          (o) => Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _CycleDot(color: _colorForCycle(o.cycleColor)),
+                              const SizedBox(width: 6),
+                              Text(o.label()),
+                            ],
+                          ),
+                        )
+                        .toList();
+                  },
+                  onChanged: (value) => setState(() {
+                    selectedOption = value;
+                  }),
+                  validator: (value) =>
+                      value == null ? 'Select a deduction date' : null,
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<ScheduleStatus>(
+                  initialValue: _data.status,
+                  decoration: const InputDecoration(labelText: 'Status'),
+                  items: statuses
+                      .map(
+                        (s) => DropdownMenuItem<ScheduleStatus>(
+                          value: s,
+                          child: Text(scheduleStatusLabel(s)),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) setState(() => _data.status = value);
+                  },
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _noteController,
+                  decoration: const InputDecoration(labelText: 'Note'),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Text(
+                      'Attachments',
+                      style: Theme.of(context).textTheme.titleSmall,
                     ),
-                  const Spacer(),
-                  OutlinedButton.icon(
-                    onPressed: _isUploading ? null : _pickAndUploadFiles,
-                    icon: const Icon(Icons.attach_file),
-                    label: const Text('Add file'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              if (_data.noteMedia.isNotEmpty)
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _data.noteMedia.map((media) {
-                      return Stack(
-                        children: [
-                          GestureDetector(
-                            onTap: () => showNoteMediaPreview(context, media),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(6),
-                              child: Container(
-                                width: 72,
-                                height: 72,
-                                color: Colors.black12,
-                                child: Image.network(
-                                  media.url,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => const Center(
-                                    child: Icon(Icons.broken_image_outlined),
+                    const SizedBox(width: 8),
+                    if (_isUploading)
+                      const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    const Spacer(),
+                    OutlinedButton.icon(
+                      onPressed: _isUploading ? null : _pickAndUploadFiles,
+                      icon: const Icon(Icons.attach_file),
+                      label: const Text('Add file'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (_data.noteMedia.isNotEmpty)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _data.noteMedia.map((media) {
+                        return Stack(
+                          children: [
+                            GestureDetector(
+                              onTap: () => showNoteMediaPreview(context, media),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(6),
+                                child: Container(
+                                  width: 72,
+                                  height: 72,
+                                  color: Colors.black12,
+                                  child: Image.network(
+                                    media.url,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            const Center(
+                                              child: Icon(
+                                                Icons.broken_image_outlined,
+                                              ),
+                                            ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                          Positioned(
-                            right: 2,
-                            top: 2,
-                            child: InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _data.noteMedia = [
-                                    for (final item in _data.noteMedia)
-                                      if (item.url != media.url) item,
-                                  ];
-                                  _syncSortOrder();
-                                });
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.black54,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: const EdgeInsets.all(2),
-                                child: const Icon(
-                                  Icons.close,
-                                  size: 12,
-                                  color: Colors.white,
+                            Positioned(
+                              right: 2,
+                              top: 2,
+                              child: InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    _data.noteMedia = [
+                                      for (final item in _data.noteMedia)
+                                        if (item.url != media.url) item,
+                                    ];
+                                    _syncSortOrder();
+                                  });
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  padding: const EdgeInsets.all(2),
+                                  child: const Icon(
+                                    Icons.close,
+                                    size: 12,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      );
-                    }).toList(),
+                          ],
+                        );
+                      }).toList(),
+                    ),
                   ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    SizedBox(
+                      width: 160,
+                      child: TextFormField(
+                        controller: _memberPriceController,
+                        decoration: const InputDecoration(
+                          labelText: 'Member Price',
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 160,
+                      child: TextFormField(
+                        controller: _autoorderPriceController,
+                        decoration: const InputDecoration(
+                          labelText: 'AutoOrder Price',
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 140,
+                      child: TextFormField(
+                        controller: _pointsController,
+                        decoration: const InputDecoration(labelText: 'Points'),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: false,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 160,
+                      child: TextFormField(
+                        controller: _freightFeeController,
+                        decoration: const InputDecoration(
+                          labelText: 'Freight Fee',
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 160,
+                      child: TextFormField(
+                        controller: _discountController,
+                        decoration: const InputDecoration(
+                          labelText: 'Discount',
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: [
-                  SizedBox(
-                    width: 160,
-                    child: TextFormField(
-                      controller: _memberPriceController,
-                      decoration: const InputDecoration(
-                        labelText: 'Member Price',
-                      ),
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
+                const SizedBox(height: 8),
+                if (selectedOption != null)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _CycleDot(
+                          color: _colorForCycle(selectedOption!.cycleColor),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Cycle ${selectedOption!.cycleValue} • ${selectedOption!.cycleColor.name} • ${dateFormatter.format(selectedOption!.date)}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
                     ),
                   ),
-                  SizedBox(
-                    width: 160,
-                    child: TextFormField(
-                      controller: _autoorderPriceController,
-                      decoration: const InputDecoration(
-                        labelText: 'AutoOrder Price',
-                      ),
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 140,
-                    child: TextFormField(
-                      controller: _pointsController,
-                      decoration: const InputDecoration(labelText: 'Points'),
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: false,
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 160,
-                    child: TextFormField(
-                      controller: _freightFeeController,
-                      decoration: const InputDecoration(
-                        labelText: 'Freight Fee',
-                      ),
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 160,
-                    child: TextFormField(
-                      controller: _discountController,
-                      decoration: const InputDecoration(labelText: 'Discount'),
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              if (selectedOption != null)
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _CycleDot(
-                        color: _colorForCycle(selectedOption!.cycleColor),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Cycle ${selectedOption!.cycleValue} • ${selectedOption!.cycleColor.name} • ${dateFormatter.format(selectedOption!.date)}',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
               ],
             ),
           ),
@@ -596,17 +602,20 @@ class _AutoOrderFormDialogState extends ConsumerState<AutoOrderFormDialog> {
   }
 
   void _showSnack(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   String _customerLabel(Customer customer) {
     return '${formatCustomerDisplayName(customer.name)} (${customer.customerUsanaId ?? '-'})';
   }
 
-  Future<void> _openCustomerForm(BuildContext context, Customer customer) async {
+  Future<void> _openCustomerForm(
+    BuildContext context,
+    Customer customer,
+  ) async {
     final repository = ref.read(customersRepositoryProvider);
     final notifier = ref.read(customersNotifierProvider.notifier);
     CustomerFormData formData;
@@ -633,6 +642,7 @@ class _AutoOrderFormDialogState extends ConsumerState<AutoOrderFormDialog> {
       await notifier.loadCountries();
       countries = ref.read(customersNotifierProvider).countries;
     }
+    if (!context.mounted) return;
     final result = await showDialog<String?>(
       context: context,
       builder: (_) {

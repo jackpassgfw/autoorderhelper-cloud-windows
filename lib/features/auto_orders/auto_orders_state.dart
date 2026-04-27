@@ -52,9 +52,7 @@ class AutoOrdersState {
       statusFilter: clearStatusFilter
           ? null
           : (statusFilter ?? this.statusFilter),
-      cycleFilter: clearCycleFilter
-          ? null
-          : (cycleFilter ?? this.cycleFilter),
+      cycleFilter: clearCycleFilter ? null : (cycleFilter ?? this.cycleFilter),
       dateRangeFilter: clearDateRangeFilter
           ? null
           : (dateRangeFilter ?? this.dateRangeFilter),

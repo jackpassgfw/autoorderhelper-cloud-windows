@@ -421,7 +421,9 @@ class _CustomerFollowupsDialogState
       isMatch = currentMatch;
     }
 
-    return RichText(text: TextSpan(text: '', style: baseStyle, children: spans));
+    return RichText(
+      text: TextSpan(text: '', style: baseStyle, children: spans),
+    );
   }
 
   Future<void> _selectDate(

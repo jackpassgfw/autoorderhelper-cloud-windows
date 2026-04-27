@@ -78,9 +78,7 @@ class CustomersRepository {
   }
 
   Future<Customer> fetchCustomer(int id) async {
-    final response = await _client.get<Map<String, dynamic>>(
-      '/customers/$id',
-    );
+    final response = await _client.get<Map<String, dynamic>>('/customers/$id');
     return Customer.fromJson(response.data ?? const {});
   }
 

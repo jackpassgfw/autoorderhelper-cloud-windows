@@ -17,10 +17,7 @@ class CartItem {
   double get lineTotalAfterDiscount => lineTotal - discountAmount;
 
   CartItem copyWith({int? quantity}) {
-    return CartItem(
-      product: product,
-      quantity: quantity ?? this.quantity,
-    );
+    return CartItem(product: product, quantity: quantity ?? this.quantity);
   }
 }
 
@@ -52,10 +49,7 @@ class SavedCart {
       items.fold(0, (total, item) => total + item.quantity);
 
   Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'items': items.map((item) => item.toJson()).toList(),
-    };
+    return {'name': name, 'items': items.map((item) => item.toJson()).toList()};
   }
 
   factory SavedCart.fromJson(Map<String, dynamic> json) {

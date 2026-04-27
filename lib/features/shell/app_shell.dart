@@ -95,10 +95,7 @@ class AppShell extends ConsumerWidget {
             padding: const EdgeInsets.only(right: 8),
             child: Row(
               children: [
-                Text(
-                  'Logout',
-                  style: Theme.of(context).textTheme.labelLarge,
-                ),
+                Text('Logout', style: Theme.of(context).textTheme.labelLarge),
                 const SizedBox(width: 4),
                 IconButton(
                   tooltip: 'Logout',

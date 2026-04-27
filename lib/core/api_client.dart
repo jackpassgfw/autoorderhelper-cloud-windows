@@ -47,7 +47,8 @@ final apiClientProvider = Provider<Dio>((ref) {
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) async {
-        final token = await tokenStore.readAccessToken();
+        final skipAuth = options.extra['skipAuth'] == true;
+        final token = skipAuth ? null : await tokenStore.readAccessToken();
         final hasToken = token != null && token.isNotEmpty;
 
         if (hasToken) {

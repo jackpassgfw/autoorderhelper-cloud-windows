@@ -20,6 +20,7 @@ class AuthRepository {
     final res = await _dio.post(
       '/auth/login',
       data: {'email': email, 'password': password},
+      options: Options(extra: {'skipAuth': true}),
     );
 
     final data = res.data;

@@ -53,7 +53,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
     final repository = ref.watch(customersRepositoryProvider);
     final highlightColor = Theme.of(
       context,
-    ).colorScheme.primary.withOpacity(0.2);
+    ).colorScheme.primary.withValues(alpha: 0.2);
     final dataTextStyle = Theme.of(context).textTheme.bodyMedium;
 
     final currentPage = state.meta.page;
@@ -136,145 +136,149 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                         padding: const EdgeInsets.all(8),
                         child: DataTable(
                           columnSpacing: 16,
-                        columns: const [
-                          DataColumn(label: Text('Name')),
-                          DataColumn(label: Text('Phone')),
-                          DataColumn(label: Text('Country')),
-                          DataColumn(label: Text('Member Status')),
-                          DataColumn(label: Text('Business Center / Side')),
-                          DataColumn(label: Text('USANA ID')),
-                          DataColumn(label: Text('Sponsor')),
-                          DataColumn(label: Text('Actions')),
-                        ],
-                        rows: sortedItems.map((customer) {
-                          final centerAndSide = [
-                            centerMap[customer.businessCenterId] ?? '-',
-                            businessCenterSideLabel(
-                              customer.businessCenterSide,
-                            ),
-                          ].join('. ');
-                          final countryLabel = customer.countryId == null
-                              ? '-'
-                              : (countryMap[customer.countryId] ??
-                                    customer.countryId.toString());
-                          final memberStatus = memberStatusLabel(
-                            customer.memberStatus,
-                          );
-                          final sponsorQuery = _mergeQueries(
-                            state.search,
-                            state.sponsorFilter,
-                          );
+                          columns: const [
+                            DataColumn(label: Text('Name')),
+                            DataColumn(label: Text('Phone')),
+                            DataColumn(label: Text('Country')),
+                            DataColumn(label: Text('Member Status')),
+                            DataColumn(label: Text('Business Center / Side')),
+                            DataColumn(label: Text('USANA ID')),
+                            DataColumn(label: Text('Sponsor')),
+                            DataColumn(label: Text('Actions')),
+                          ],
+                          rows: sortedItems.map((customer) {
+                            final centerAndSide = [
+                              centerMap[customer.businessCenterId] ?? '-',
+                              businessCenterSideLabel(
+                                customer.businessCenterSide,
+                              ),
+                            ].join('. ');
+                            final countryLabel = customer.countryId == null
+                                ? '-'
+                                : (countryMap[customer.countryId] ??
+                                      customer.countryId.toString());
+                            final memberStatus = memberStatusLabel(
+                              customer.memberStatus,
+                            );
+                            final sponsorQuery = _mergeQueries(
+                              state.search,
+                              state.sponsorFilter,
+                            );
 
-                          final displayName = formatCustomerDisplayName(
-                            customer.name,
-                          );
-                          return DataRow(
-                            cells: [
-                              DataCell(
-                                _buildHighlightedText(
-                                  displayName,
-                                  state.search,
-                                  dataTextStyle,
-                                  highlightColor,
-                                ),
-                              ),
-                              DataCell(
-                                _buildHighlightedText(
-                                  customer.phone,
-                                  state.search,
-                                  dataTextStyle,
-                                  highlightColor,
-                                ),
-                              ),
-                              DataCell(
-                                _buildHighlightedText(
-                                  countryLabel,
-                                  state.search,
-                                  dataTextStyle,
-                                  highlightColor,
-                                ),
-                              ),
-                              DataCell(
-                                _buildHighlightedText(
-                                  memberStatus,
-                                  state.search,
-                                  dataTextStyle,
-                                  highlightColor,
-                                ),
-                              ),
-                              DataCell(
-                                _buildHighlightedText(
-                                  centerAndSide,
-                                  state.search,
-                                  dataTextStyle,
-                                  highlightColor,
-                                ),
-                              ),
-                              DataCell(
-                                _buildHighlightedText(
-                                  customer.customerUsanaId ?? '-',
-                                  state.search,
-                                  dataTextStyle,
-                                  highlightColor,
-                                ),
-                              ),
-                              DataCell(
-                                _buildHighlightedText(
-                                  customer.sponsor ?? '-',
-                                  sponsorQuery,
-                                  dataTextStyle,
-                                  highlightColor,
-                                ),
-                              ),
-                              DataCell(
-                                SizedBox(
-                                  width: 190,
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
-                                    children: [
-                                      IconButton(
-                                        tooltip: 'Follow-ups',
-                                        icon: const Icon(
-                                          Icons.chat_bubble_outline,
-                                        ),
-                                        onPressed: () =>
-                                            _openFollowups(context, customer),
-                                      ),
-                                      IconButton(
-                                        tooltip: 'View schedules',
-                                        icon: const Icon(
-                                          Icons.list_alt_outlined,
-                                        ),
-                                        onPressed: () =>
-                                            _openAutoOrders(context, customer),
-                                      ),
-                                      IconButton(
-                                        tooltip: 'Edit',
-                                        icon: const Icon(Icons.edit_outlined),
-                                        onPressed: () => _openCustomerForm(
-                                          context,
-                                          centerMap,
-                                          repository,
-                                          customer,
-                                        ),
-                                      ),
-                                      IconButton(
-                                        tooltip: 'Delete',
-                                        icon: const Icon(Icons.delete_outline),
-                                        onPressed: () =>
-                                            _confirmDelete(context, customer),
-                                      ),
-                                    ],
+                            final displayName = formatCustomerDisplayName(
+                              customer.name,
+                            );
+                            return DataRow(
+                              cells: [
+                                DataCell(
+                                  _buildHighlightedText(
+                                    displayName,
+                                    state.search,
+                                    dataTextStyle,
+                                    highlightColor,
                                   ),
                                 ),
-                              ),
-                            ],
-                          );
-                        }).toList(),
+                                DataCell(
+                                  _buildHighlightedText(
+                                    customer.phone,
+                                    state.search,
+                                    dataTextStyle,
+                                    highlightColor,
+                                  ),
+                                ),
+                                DataCell(
+                                  _buildHighlightedText(
+                                    countryLabel,
+                                    state.search,
+                                    dataTextStyle,
+                                    highlightColor,
+                                  ),
+                                ),
+                                DataCell(
+                                  _buildHighlightedText(
+                                    memberStatus,
+                                    state.search,
+                                    dataTextStyle,
+                                    highlightColor,
+                                  ),
+                                ),
+                                DataCell(
+                                  _buildHighlightedText(
+                                    centerAndSide,
+                                    state.search,
+                                    dataTextStyle,
+                                    highlightColor,
+                                  ),
+                                ),
+                                DataCell(
+                                  _buildHighlightedText(
+                                    customer.customerUsanaId ?? '-',
+                                    state.search,
+                                    dataTextStyle,
+                                    highlightColor,
+                                  ),
+                                ),
+                                DataCell(
+                                  _buildHighlightedText(
+                                    customer.sponsor ?? '-',
+                                    sponsorQuery,
+                                    dataTextStyle,
+                                    highlightColor,
+                                  ),
+                                ),
+                                DataCell(
+                                  SizedBox(
+                                    width: 190,
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        IconButton(
+                                          tooltip: 'Follow-ups',
+                                          icon: const Icon(
+                                            Icons.chat_bubble_outline,
+                                          ),
+                                          onPressed: () =>
+                                              _openFollowups(context, customer),
+                                        ),
+                                        IconButton(
+                                          tooltip: 'View schedules',
+                                          icon: const Icon(
+                                            Icons.list_alt_outlined,
+                                          ),
+                                          onPressed: () => _openAutoOrders(
+                                            context,
+                                            customer,
+                                          ),
+                                        ),
+                                        IconButton(
+                                          tooltip: 'Edit',
+                                          icon: const Icon(Icons.edit_outlined),
+                                          onPressed: () => _openCustomerForm(
+                                            context,
+                                            centerMap,
+                                            repository,
+                                            customer,
+                                          ),
+                                        ),
+                                        IconButton(
+                                          tooltip: 'Delete',
+                                          icon: const Icon(
+                                            Icons.delete_outline,
+                                          ),
+                                          onPressed: () =>
+                                              _confirmDelete(context, customer),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
-                  ),
             ),
           ),
         ],
@@ -538,6 +542,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
       formData = CustomerFormData();
     }
 
+    if (!context.mounted) return;
     final result = await showDialog<String?>(
       context: context,
       builder: (context) {
@@ -593,9 +598,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
           ),
         );
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               'Deleted ${formatCustomerDisplayName(customer.name)}',

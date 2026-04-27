@@ -211,8 +211,9 @@ class _DeliveryFormPageState extends ConsumerState<DeliveryFormPage> {
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       FilledButton.icon(
-                        onPressed:
-                            _isUploadingAttachments ? null : _pickAttachments,
+                        onPressed: _isUploadingAttachments
+                            ? null
+                            : _pickAttachments,
                         icon: const Icon(Icons.add),
                         label: Text(
                           _isUploadingAttachments
@@ -223,8 +224,7 @@ class _DeliveryFormPageState extends ConsumerState<DeliveryFormPage> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  if (_attachments.isEmpty)
-                    const Text('No attachments'),
+                  if (_attachments.isEmpty) const Text('No attachments'),
                   if (_isUploadingAttachments)
                     const Padding(
                       padding: EdgeInsets.only(top: 8),
@@ -235,7 +235,9 @@ class _DeliveryFormPageState extends ConsumerState<DeliveryFormPage> {
                       spacing: 12,
                       runSpacing: 12,
                       children: _attachments
-                          .map((attachment) => _buildAttachmentThumb(attachment))
+                          .map(
+                            (attachment) => _buildAttachmentThumb(attachment),
+                          )
                           .toList(),
                     ),
                 ],
@@ -256,12 +258,12 @@ class _DeliveryFormPageState extends ConsumerState<DeliveryFormPage> {
                   ),
                   Chip(
                     label: Text('${_customers.length} customers'),
-                    backgroundColor: colorScheme.surfaceVariant,
+                    backgroundColor: colorScheme.surfaceContainerHighest,
                     side: BorderSide(color: colorScheme.outlineVariant),
                   ),
                   Chip(
                     label: Text('$totalOrders orders'),
-                    backgroundColor: colorScheme.surfaceVariant,
+                    backgroundColor: colorScheme.surfaceContainerHighest,
                     side: BorderSide(color: colorScheme.outlineVariant),
                   ),
                 ],
@@ -293,7 +295,8 @@ class _DeliveryFormPageState extends ConsumerState<DeliveryFormPage> {
   }
 
   Widget _buildCustomerCard(int index, _CustomerEntry entry) {
-    final hasSelected = entry.selectedCustomerId != null &&
+    final hasSelected =
+        entry.selectedCustomerId != null &&
         _availableCustomers.any((c) => c.id == entry.selectedCustomerId);
     final selectedCustomer = hasSelected
         ? _availableCustomers.firstWhere(
@@ -321,8 +324,9 @@ class _DeliveryFormPageState extends ConsumerState<DeliveryFormPage> {
                 const SizedBox(width: 8),
                 Chip(
                   label: Text('${entry.orders.length} orders'),
-                  backgroundColor:
-                      Theme.of(context).colorScheme.surfaceVariant,
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest,
                   side: BorderSide(
                     color: Theme.of(context).colorScheme.outlineVariant,
                   ),
@@ -383,10 +387,7 @@ class _DeliveryFormPageState extends ConsumerState<DeliveryFormPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Orders',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
+                Text('Orders', style: Theme.of(context).textTheme.titleMedium),
                 TextButton.icon(
                   onPressed: () => _addOrder(entry),
                   icon: const Icon(Icons.add),
@@ -396,9 +397,11 @@ class _DeliveryFormPageState extends ConsumerState<DeliveryFormPage> {
             ),
             const Divider(),
             const SizedBox(height: 8),
-            for (var orderIndex = 0;
-                orderIndex < entry.orders.length;
-                orderIndex++)
+            for (
+              var orderIndex = 0;
+              orderIndex < entry.orders.length;
+              orderIndex++
+            )
               _buildOrderRow(entry, orderIndex),
           ],
         ),
@@ -499,7 +502,7 @@ class _DeliveryFormPageState extends ConsumerState<DeliveryFormPage> {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceVariant,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: Theme.of(context).colorScheme.outlineVariant,
@@ -510,9 +513,8 @@ class _DeliveryFormPageState extends ConsumerState<DeliveryFormPage> {
                 ? Image.network(
                     attachment.url,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const Center(
-                      child: Icon(Icons.broken_image_outlined),
-                    ),
+                    errorBuilder: (context, error, stackTrace) =>
+                        const Center(child: Icon(Icons.broken_image_outlined)),
                   )
                 : Center(
                     child: Icon(
@@ -542,8 +544,9 @@ class _DeliveryFormPageState extends ConsumerState<DeliveryFormPage> {
               icon: const Icon(Icons.close, size: 18),
               onPressed: () => _removeAttachment(attachment),
               style: IconButton.styleFrom(
-                backgroundColor:
-                    Theme.of(context).colorScheme.surface.withOpacity(0.9),
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.surface.withValues(alpha: 0.9),
                 padding: EdgeInsets.zero,
               ),
             ),
@@ -559,7 +562,9 @@ class _DeliveryFormPageState extends ConsumerState<DeliveryFormPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          attachment.originalName.isEmpty ? 'Attachment' : attachment.originalName,
+          attachment.originalName.isEmpty
+              ? 'Attachment'
+              : attachment.originalName,
         ),
         content: SizedBox(
           width: 520,
@@ -568,9 +573,8 @@ class _DeliveryFormPageState extends ConsumerState<DeliveryFormPage> {
                   child: Image.network(
                     attachment.url,
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Center(
-                      child: Icon(Icons.broken_image_outlined),
-                    ),
+                    errorBuilder: (context, error, stackTrace) =>
+                        const Center(child: Icon(Icons.broken_image_outlined)),
                   ),
                 )
               : Column(
@@ -679,13 +683,6 @@ class _DeliveryFormPageState extends ConsumerState<DeliveryFormPage> {
     }
   }
 
-  Customer? _findCustomer(int id) {
-    for (final customer in _availableCustomers) {
-      if (customer.id == id) return customer;
-    }
-    return null;
-  }
-
   List<Customer> _mergeMissingCustomers(List<Customer> customers) {
     final byId = {for (final customer in customers) customer.id: customer};
     for (final entry in _customers) {
@@ -701,9 +698,7 @@ class _DeliveryFormPageState extends ConsumerState<DeliveryFormPage> {
       );
     }
     return byId.values.toList()
-      ..sort(
-        (a, b) => compareCustomerNamesAsc(a.name, b.name),
-      );
+      ..sort((a, b) => compareCustomerNamesAsc(a.name, b.name));
   }
 
   String _resolveCustomerName(
@@ -762,8 +757,8 @@ class _CustomerEntry {
       orders: customer.orders.isEmpty
           ? [TextEditingController()]
           : customer.orders
-              .map((order) => TextEditingController(text: order.orderNo))
-              .toList(),
+                .map((order) => TextEditingController(text: order.orderNo))
+                .toList(),
     );
   }
 
@@ -796,7 +791,8 @@ class _CustomerAutocompleteField extends StatefulWidget {
       _CustomerAutocompleteFieldState();
 }
 
-class _CustomerAutocompleteFieldState extends State<_CustomerAutocompleteField> {
+class _CustomerAutocompleteFieldState
+    extends State<_CustomerAutocompleteField> {
   static const _debounceDuration = Duration(milliseconds: 250);
 
   Timer? _debounceTimer;
@@ -813,7 +809,9 @@ class _CustomerAutocompleteFieldState extends State<_CustomerAutocompleteField> 
 
   @override
   Widget build(BuildContext context) {
-    final highlightColor = Theme.of(context).colorScheme.primary.withOpacity(0.2);
+    final highlightColor = Theme.of(
+      context,
+    ).colorScheme.primary.withValues(alpha: 0.2);
     return Autocomplete<Customer>(
       displayStringForOption: (option) =>
           '${formatCustomerDisplayName(option.name)} (${option.phone})',
@@ -823,8 +821,8 @@ class _CustomerAutocompleteFieldState extends State<_CustomerAutocompleteField> 
           return widget.customers;
         }
         return widget.customers.where((customer) {
-          final haystack =
-              '${customer.name} ${customer.phone} ${customer.id}'.toLowerCase();
+          final haystack = '${customer.name} ${customer.phone} ${customer.id}'
+              .toLowerCase();
           return _matchesTokens(haystack, _tokenizeQuery(query));
         });
       },
@@ -1043,8 +1041,8 @@ class _StatusChip extends StatelessWidget {
     return Chip(
       label: Text(label),
       labelStyle: TextStyle(color: color),
-      backgroundColor: color.withOpacity(0.12),
-      side: BorderSide(color: color.withOpacity(0.4)),
+      backgroundColor: color.withValues(alpha: 0.12),
+      side: BorderSide(color: color.withValues(alpha: 0.4)),
       visualDensity: VisualDensity.compact,
     );
   }

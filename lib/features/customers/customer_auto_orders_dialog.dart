@@ -73,7 +73,7 @@ class _CustomerAutoOrdersDialogState
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<int>(
-                        value: _filterCustomerId,
+                        initialValue: _filterCustomerId,
                         decoration: const InputDecoration(
                           labelText: 'Customer',
                         ),
@@ -213,9 +213,9 @@ class _CustomerAutoOrdersDialogState
       if (dialogResult != null) {
         final refreshed = _findOrderById(order.id);
         setState(() => _selectedOrder = refreshed);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Auto-order saved')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Auto-order saved')));
       }
     } on DioException catch (error) {
       if (!mounted) return;
@@ -507,10 +507,11 @@ class _NarrowCards extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               color: isSelected
-                  ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.08)
-                  : Theme.of(
+                  ? Theme.of(
                       context,
-                    ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                    ).colorScheme.primary.withValues(alpha: 0.08)
+                  : Theme.of(context).colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: isSelected

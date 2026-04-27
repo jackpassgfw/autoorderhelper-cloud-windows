@@ -47,7 +47,9 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.initialData.name);
-    _codeController = TextEditingController(text: widget.initialData.code ?? '');
+    _codeController = TextEditingController(
+      text: widget.initialData.code ?? '',
+    );
     _packagingController = TextEditingController(
       text: widget.initialData.packaging ?? '',
     );
@@ -143,10 +145,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   @override
   Widget build(BuildContext context) {
     final categoryItems = <DropdownMenuItem<int?>>[
-      const DropdownMenuItem<int?>(
-        value: null,
-        child: Text('Uncategorized'),
-      ),
+      const DropdownMenuItem<int?>(value: null, child: Text('Uncategorized')),
       ...widget.categories.map(
         (category) => DropdownMenuItem<int?>(
           value: category.id,
@@ -156,7 +155,8 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
     ];
 
     final hasSelectedCategory =
-        _categoryId == null || widget.categories.any((c) => c.id == _categoryId);
+        _categoryId == null ||
+        widget.categories.any((c) => c.id == _categoryId);
     if (!hasSelectedCategory) {
       categoryItems.insert(
         1,
@@ -168,7 +168,9 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
     }
 
     return AlertDialog(
-      title: Text(widget.initialData.id == null ? 'New Product' : 'Edit Product'),
+      title: Text(
+        widget.initialData.id == null ? 'New Product' : 'Edit Product',
+      ),
       content: SizedBox(
         width: 460,
         child: Form(
@@ -279,9 +281,12 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
                                 child: Image.network(
                                   media.url,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => const Center(
-                                    child: Icon(Icons.broken_image_outlined),
-                                  ),
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Center(
+                                        child: Icon(
+                                          Icons.broken_image_outlined,
+                                        ),
+                                      ),
                                 ),
                               ),
                             ),
@@ -398,8 +403,8 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   }
 
   void _showSnack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }

@@ -98,10 +98,7 @@ class PaginationMeta {
         json['page_size'] ?? json['pageSize'] ?? json['per_page'],
         10,
       ),
-      total: parseInt(
-        json['total'] ?? json['count'] ?? json['total_count'],
-        0,
-      ),
+      total: parseInt(json['total'] ?? json['count'] ?? json['total_count'], 0),
     );
   }
 }
@@ -311,10 +308,7 @@ class Country {
   final String name;
 
   factory Country.fromJson(Map<String, dynamic> json) {
-    return Country(
-      id: json['id'] as int,
-      name: json['name'] as String? ?? '',
-    );
+    return Country(id: json['id'] as int, name: json['name'] as String? ?? '');
   }
 }
 

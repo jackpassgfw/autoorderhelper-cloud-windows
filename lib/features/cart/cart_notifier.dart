@@ -7,8 +7,9 @@ import '../products/models.dart';
 import 'cart_state.dart';
 import 'models.dart';
 
-final cartNotifierProvider =
-    StateNotifierProvider<CartNotifier, CartState>((ref) {
+final cartNotifierProvider = StateNotifierProvider<CartNotifier, CartState>((
+  ref,
+) {
   return CartNotifier();
 });
 
@@ -18,19 +19,16 @@ class CartNotifier extends StateNotifier<CartState> {
   }
 
   void addProduct(Product product) {
-    final existingIndex =
-        state.items.indexWhere((item) => item.product.id == product.id);
+    final existingIndex = state.items.indexWhere(
+      (item) => item.product.id == product.id,
+    );
     if (existingIndex == -1) {
-      _setItems([
-        ...state.items,
-        CartItem(product: product, quantity: 1),
-      ]);
+      _setItems([...state.items, CartItem(product: product, quantity: 1)]);
       return;
     }
     final updated = [...state.items];
     final existing = updated[existingIndex];
-    updated[existingIndex] =
-        existing.copyWith(quantity: existing.quantity + 1);
+    updated[existingIndex] = existing.copyWith(quantity: existing.quantity + 1);
     _setItems(updated);
   }
 
@@ -50,8 +48,9 @@ class CartNotifier extends StateNotifier<CartState> {
   }
 
   void removeProduct(int productId) {
-    final updated =
-        state.items.where((item) => item.product.id != productId).toList();
+    final updated = state.items
+        .where((item) => item.product.id != productId)
+        .toList();
     _setItems(updated);
   }
 
@@ -73,10 +72,7 @@ class CartNotifier extends StateNotifier<CartState> {
     if (trimmed.isEmpty) return;
     final savedItems = [
       for (final item in state.items)
-        SavedCartItem(
-          productId: item.product.id,
-          quantity: item.quantity,
-        ),
+        SavedCartItem(productId: item.product.id, quantity: item.quantity),
     ];
     final updated = [
       for (final cart in state.savedCarts)
@@ -88,8 +84,9 @@ class CartNotifier extends StateNotifier<CartState> {
   }
 
   Future<void> deleteSavedCart(String name) async {
-    final updated =
-        state.savedCarts.where((cart) => cart.name != name).toList();
+    final updated = state.savedCarts
+        .where((cart) => cart.name != name)
+        .toList();
     state = state.copyWith(savedCarts: updated);
     await _persistSavedCarts(updated);
   }
@@ -108,10 +105,7 @@ class CartNotifier extends StateNotifier<CartState> {
     await _persistSavedCarts(updated);
   }
 
-  int loadSavedCart(
-    SavedCart savedCart,
-    Map<int, Product> productsById,
-  ) {
+  int loadSavedCart(SavedCart savedCart, Map<int, Product> productsById) {
     final items = <CartItem>[];
     var missing = 0;
     for (final item in savedCart.items) {
@@ -129,14 +123,6 @@ class CartNotifier extends StateNotifier<CartState> {
   void _setItems(List<CartItem> items) {
     final clamped = _clampNonNegative(state.discountAmount);
     state = state.copyWith(items: items, discountAmount: clamped);
-  }
-
-  double _calculateSubtotal(List<CartItem> items) {
-    return items.fold(0, (total, item) => total + item.lineTotal);
-  }
-
-  double _calculateItemDiscount(List<CartItem> items) {
-    return items.fold(0, (total, item) => total + item.discountAmount);
   }
 
   double _clampNonNegative(double value) {
@@ -161,8 +147,7 @@ class CartNotifier extends StateNotifier<CartState> {
 
   Future<void> _persistSavedCarts(List<SavedCart> carts) async {
     final prefs = await SharedPreferences.getInstance();
-    final encoded =
-        jsonEncode(carts.map((cart) => cart.toJson()).toList());
+    final encoded = jsonEncode(carts.map((cart) => cart.toJson()).toList());
     await prefs.setString(_savedCartsKey, encoded);
   }
 }
