@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/clipboard_images.dart';
 import '../auto_orders/models.dart';
 import '../auto_orders/note_media_preview.dart';
 import 'models.dart';
@@ -295,10 +296,17 @@ class _CustomerFormDialogState extends State<CustomerFormDialog> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
+                ClipboardImagePaste(
                   controller: _noteController,
-                  decoration: const InputDecoration(labelText: 'Note'),
-                  maxLines: 2,
+                  onImage: _handlePastedImage,
+                  child: TextFormField(
+                    controller: _noteController,
+                    decoration: const InputDecoration(
+                      labelText: 'Note',
+                      hintText: 'Paste an image with Ctrl+V to attach',
+                    ),
+                    maxLines: 2,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -456,6 +464,24 @@ class _CustomerFormDialogState extends State<CustomerFormDialog> {
       _syncSortOrder();
     } catch (_) {
       _showSnack('Failed to upload file');
+    } finally {
+      if (mounted) {
+        setState(() => _isUploading = false);
+      }
+    }
+  }
+
+  Future<void> _handlePastedImage(File file) async {
+    if (_isUploading) return;
+    setState(() => _isUploading = true);
+    try {
+      final uploaded = await widget.repository.uploadMedia(file);
+      setState(() {
+        _attachments = [..._attachments, uploaded];
+        _syncSortOrder();
+      });
+    } catch (_) {
+      _showSnack('Failed to paste image');
     } finally {
       if (mounted) {
         setState(() => _isUploading = false);

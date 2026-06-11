@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/api_client.dart';
+import '../../core/clipboard_images.dart';
 import '../auto_orders/models.dart' show NoteMedia;
 import '../customers/customer_sort.dart';
 import '../customers/customers_repository.dart';
@@ -164,13 +165,18 @@ class _DeliveryFormPageState extends ConsumerState<DeliveryFormPage> {
                   ),
                   const SizedBox(height: 12),
                   _fieldWidth(
-                    TextField(
+                    ClipboardImagePaste(
                       controller: _noteController,
-                      minLines: 2,
-                      maxLines: 4,
-                      decoration: const InputDecoration(
-                        labelText: 'Note',
-                        border: OutlineInputBorder(),
+                      onImage: _handlePastedImage,
+                      child: TextField(
+                        controller: _noteController,
+                        minLines: 2,
+                        maxLines: 4,
+                        decoration: const InputDecoration(
+                          labelText: 'Note',
+                          hintText: 'Paste an image with Ctrl+V to attach',
+                          border: OutlineInputBorder(),
+                        ),
                       ),
                     ),
                     maxWidth: 520,
@@ -613,6 +619,37 @@ class _DeliveryFormPageState extends ConsumerState<DeliveryFormPage> {
       unitIndex++;
     }
     return '${sizeValue.toStringAsFixed(sizeValue < 10 ? 1 : 0)} ${units[unitIndex]}';
+  }
+
+  Future<void> _handlePastedImage(File file) async {
+    if (_isUploadingAttachments) return;
+    setState(() => _isUploadingAttachments = true);
+    try {
+      final repository = ref.read(deliveriesRepositoryProvider);
+      final uploaded = await repository.uploadAttachment(file);
+      if (!mounted) return;
+      setState(() => _attachments.add(uploaded));
+    } on DioException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(normalizeErrorMessage(error)),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Failed to paste image'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingAttachments = false);
+      }
+    }
   }
 
   Future<void> _pickAttachments() async {

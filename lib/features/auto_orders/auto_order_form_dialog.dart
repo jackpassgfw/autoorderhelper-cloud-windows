@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:dio/dio.dart';
 
 import '../../core/api_client.dart';
+import '../../core/clipboard_images.dart';
 import '../customers/customer_sort.dart';
 import '../customers/models.dart';
 import '../customers/customer_form_dialog.dart';
@@ -335,10 +336,17 @@ class _AutoOrderFormDialogState extends ConsumerState<AutoOrderFormDialog> {
                   },
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
+                ClipboardImagePaste(
                   controller: _noteController,
-                  decoration: const InputDecoration(labelText: 'Note'),
-                  maxLines: 3,
+                  onImage: _handlePastedImage,
+                  child: TextFormField(
+                    controller: _noteController,
+                    decoration: const InputDecoration(
+                      labelText: 'Note',
+                      hintText: 'Paste an image with Ctrl+V to attach',
+                    ),
+                    maxLines: 3,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -565,6 +573,25 @@ class _AutoOrderFormDialogState extends ConsumerState<AutoOrderFormDialog> {
       _syncSortOrder();
     } catch (_) {
       _showSnack('Failed to upload file');
+    } finally {
+      if (mounted) {
+        setState(() => _isUploading = false);
+      }
+    }
+  }
+
+  Future<void> _handlePastedImage(File file) async {
+    if (_isUploading) return;
+    setState(() => _isUploading = true);
+    try {
+      final repository = ref.read(autoOrdersRepositoryProvider);
+      final uploaded = await repository.uploadNoteMedia(file);
+      setState(() {
+        _data.noteMedia = [..._data.noteMedia, uploaded];
+        _syncSortOrder();
+      });
+    } catch (_) {
+      _showSnack('Failed to paste image');
     } finally {
       if (mounted) {
         setState(() => _isUploading = false);
