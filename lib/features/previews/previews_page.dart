@@ -51,17 +51,14 @@ class _PreviewsPageState extends ConsumerState<PreviewsPage> {
               icon: const Icon(Icons.refresh),
               label: const Text('Refresh'),
             ),
-            child: SizedBox(
-              height: 320,
-              child: _PreviewList(
-                title: 'Next Week',
-                occurrences: state.nextWeek,
-                isLoading: state.isLoadingNextWeek,
-                errorMessage: state.errorNextWeek,
-                onRetry: notifier.loadNextWeek,
-                onEdit: (occurrence) =>
-                    _openEditDialog(context, occurrence, autoOrdersRepository),
-              ),
+            child: _PreviewList(
+              title: 'Next Week',
+              occurrences: state.nextWeek,
+              isLoading: state.isLoadingNextWeek,
+              errorMessage: state.errorNextWeek,
+              onRetry: notifier.loadNextWeek,
+              onEdit: (occurrence) =>
+                  _openEditDialog(context, occurrence, autoOrdersRepository),
             ),
           ),
         ],
@@ -223,13 +220,18 @@ class _PreviewList extends StatelessWidget {
     final grouped = _groupByDate(activeOccurrences);
 
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const SizedBox(
+        height: 220,
+        child: Center(child: CircularProgressIndicator()),
+      );
     }
 
     if (errorMessage != null) {
-      return Center(
+      return SizedBox(
+        height: 220,
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               errorMessage!,
@@ -247,10 +249,13 @@ class _PreviewList extends StatelessWidget {
     }
 
     if (grouped.isEmpty) {
-      return Center(child: Text('No preview data'));
+      return const SizedBox(
+        height: 220,
+        child: Center(child: Text('No preview data')),
+      );
     }
 
-    return ListView(
+    return Column(
       children: grouped.entries.map((entry) {
         final day = entry.key;
         final items = entry.value;
