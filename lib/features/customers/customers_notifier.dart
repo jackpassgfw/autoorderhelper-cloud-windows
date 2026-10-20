@@ -294,21 +294,9 @@ class CustomersNotifier extends StateNotifier<CustomersState> {
 
   bool _matchesTokens(String text, List<String> tokens) {
     for (final token in tokens) {
-      if (text.contains(token)) continue;
-      if (!_isSubsequence(token, text)) return false;
+      if (!text.contains(token)) return false;
     }
     return true;
-  }
-
-  bool _isSubsequence(String pattern, String text) {
-    var patternIndex = 0;
-    for (var textIndex = 0; textIndex < text.length; textIndex++) {
-      if (patternIndex >= pattern.length) return true;
-      if (text[textIndex] == pattern[patternIndex]) {
-        patternIndex++;
-      }
-    }
-    return patternIndex >= pattern.length;
   }
 
   int _compareCustomerByNameAsc(Customer a, Customer b) {
