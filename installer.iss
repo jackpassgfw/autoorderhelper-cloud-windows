@@ -1,6 +1,6 @@
 [Setup]
 AppName=Auto Order Helper
-AppVersion=1.0.1
+AppVersion=1.0.2
 DefaultDirName={commonpf}\AutoOrderHelper
 DefaultGroupName=Auto Order Helper
 OutputDir=.
