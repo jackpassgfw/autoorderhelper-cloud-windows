@@ -14,24 +14,35 @@ class CategoriesRepository {
 
   final Dio _client;
 
-  Future<List<Category>> fetchAll({int page = 1, int pageSize = 200}) async {
-    final response = await _client.get<dynamic>(
-      '/categories/',
-      queryParameters: {'page': page, 'page_size': pageSize},
-    );
-    final data = response.data;
-    if (data is Map<String, dynamic>) {
-      final items = data['items'] as List<dynamic>? ?? [];
-      return items
-          .map((item) => Category.fromJson(item as Map<String, dynamic>))
-          .toList();
+  /// Fetches every page; the backend caps `page_size` at 100.
+  Future<List<Category>> fetchAll({int pageSize = 100}) async {
+    final items = <Category>[];
+    var page = 1;
+    while (true) {
+      final response = await _client.get<dynamic>(
+        '/categories/',
+        queryParameters: {'page': page, 'page_size': pageSize},
+      );
+      final data = response.data;
+      if (data is List) {
+        return data
+            .map((item) => Category.fromJson(item as Map<String, dynamic>))
+            .toList();
+      }
+      if (data is! Map<String, dynamic>) break;
+
+      final raw = data['items'] as List<dynamic>? ?? const [];
+      items.addAll(
+        raw.map((item) => Category.fromJson(item as Map<String, dynamic>)),
+      );
+
+      final meta = data['meta'];
+      final total = meta is Map ? (meta['total'] as num?)?.toInt() : null;
+      final done = total != null ? items.length >= total : raw.length < pageSize;
+      if (raw.isEmpty || done) break;
+      page += 1;
     }
-    if (data is List) {
-      return data
-          .map((item) => Category.fromJson(item as Map<String, dynamic>))
-          .toList();
-    }
-    return const [];
+    return items;
   }
 
   Future<Category> create({
