@@ -699,7 +699,7 @@ class _DeliveryFormPageState extends ConsumerState<DeliveryFormPage> {
     });
     try {
       final repository = ref.read(customersRepositoryProvider);
-      final customers = await repository.fetchAllCustomers(pageSize: 200);
+      final customers = await repository.fetchAllCustomers(pageSize: 100);
       if (!mounted) return;
       setState(() {
         _availableCustomers = _mergeMissingCustomers(customers);

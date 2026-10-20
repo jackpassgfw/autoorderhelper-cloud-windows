@@ -43,7 +43,7 @@ class CustomersRepository {
   }
 
   Future<List<Customer>> fetchAllCustomers({
-    int pageSize = 200,
+    int pageSize = 100,
     MemberStatus? memberStatus,
     int? businessCenterId,
     String? ordering,
